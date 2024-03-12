@@ -4,26 +4,48 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import ru.gidevent.RestAPI.model.*
+import ru.gidevent.RestAPI.auth.AuthenticationService
 import ru.gidevent.RestAPI.model.db.*
 import ru.gidevent.RestAPI.model.request.*
 import ru.gidevent.RestAPI.model.response.ResponseMessage
 import ru.gidevent.RestAPI.service.AdvertisementService
+import java.util.*
 
 @RestController
 @RequestMapping("/api/")
 class AdvertisementController {
     @Autowired
     lateinit var advertisementService: AdvertisementService
+    @Autowired
+    lateinit var authService: AuthenticationService
 
     @GetMapping("auth/advertisement/")
     fun advertisement(): ResponseEntity<*> {
+        //return ResponseEntity.ok(advertisementService.allAdvertisements())
         return ResponseEntity.ok(advertisementService.allAdvertisements())
     }
 
     @GetMapping("auth/advertisement/top")
     fun topAdvertisement(): ResponseEntity<*> {
         return ResponseEntity.ok(advertisementService.topAdvertisements())
+    }
+
+    @GetMapping("advertisement/")
+    fun advertisementPrivate(): ResponseEntity<*> {
+        val profile = authService.getUser()
+        return ResponseEntity.ok(advertisementService.allAdvertisements(profile.id))
+    }
+
+    @GetMapping("advertisement/top")
+    fun topAdvertisementPrivate(): ResponseEntity<*> {
+        val profile = authService.getUser()
+        return ResponseEntity.ok(advertisementService.topAdvertisements(profile.id))
+    }
+
+    @GetMapping("advertisement/favourite")
+    fun favouriteAdvertisement(): ResponseEntity<*> {
+        val profile = authService.getUser()
+        return ResponseEntity.ok(advertisementService.favouriteAdvertisements(profile.id))
     }
 
     @GetMapping("auth/advertisement/{id}")
@@ -267,18 +289,26 @@ class AdvertisementController {
     @PostMapping("eventTime/")
     fun postEventTime(@RequestBody eventTimeRequest: EventTimeRequest): ResponseEntity<*> {
         val advertisement = advertisementService.getAdvertisementById(eventTimeRequest.advertisement)
-
+        val startDate = Calendar.getInstance(Locale.getDefault())
+        startDate.timeInMillis = eventTimeRequest.startDate
+        val endDate = Calendar.getInstance(Locale.getDefault())
+        endDate.timeInMillis = eventTimeRequest.endDate
+        val time = Calendar.getInstance(Locale.getDefault())
+        time.timeInMillis = eventTimeRequest.time
+        //val daysOfWeek = eventTimeRequest.daysOfWeek.split(",")
 
         return if (advertisement != null) {
-            val newCategory = advertisementService.saveEventTime(EventTime(
-                    timeId = eventTimeRequest.timeId,
-                    advertisement = advertisement,
-                    time = eventTimeRequest.time,
-                    isRepeatable = eventTimeRequest.isRepeatable,
-                    daysOfWeek = eventTimeRequest.daysOfWeek,
-                    date = eventTimeRequest.date,
-            ))
-            ResponseEntity.ok(newCategory)
+            val eventTime = advertisementService.saveEventTime(EventTime(
+                        timeId = eventTimeRequest.timeId,
+                        advertisement = advertisement,
+                        time = time,
+                        isRepeatable = eventTimeRequest.isRepeatable,
+                        daysOfWeek = eventTimeRequest.daysOfWeek,
+                        startDate = startDate,
+                        endDate = endDate
+                ))
+
+            ResponseEntity.ok(eventTime)
         } else {
             ResponseEntity(ResponseMessage("advertisement is not exist"), HttpStatus.BAD_REQUEST)
         }
@@ -290,16 +320,22 @@ class AdvertisementController {
     fun updateEventTime(@RequestBody eventTimeRequest: EventTimeRequest): ResponseEntity<*> {
 
         val advertisement = advertisementService.getAdvertisementById(eventTimeRequest.advertisement)
-
+        val startDate = Calendar.getInstance(Locale.getDefault())
+        startDate.timeInMillis = eventTimeRequest.startDate
+        val endDate = Calendar.getInstance(Locale.getDefault())
+        endDate.timeInMillis = eventTimeRequest.endDate
+        val time = Calendar.getInstance(Locale.getDefault())
+        time.timeInMillis = eventTimeRequest.time
 
         return if (advertisement != null) {
             val newCategory = advertisementService.updateEventTime(eventTimeRequest.timeId, EventTime(
                     timeId = eventTimeRequest.timeId,
                     advertisement = advertisement,
-                    time = eventTimeRequest.time,
+                    time = time,
                     isRepeatable = eventTimeRequest.isRepeatable,
                     daysOfWeek = eventTimeRequest.daysOfWeek,
-                    date = eventTimeRequest.date,
+                    startDate = startDate,
+                    endDate = endDate
             ))
             ResponseEntity.ok(newCategory)
         } else {

@@ -2,6 +2,7 @@ package ru.gidevent.RestAPI.model.db
 
 import jakarta.persistence.*
 import ru.gidevent.RestAPI.model.db.Advertisement
+import java.util.Calendar
 
 @Entity
 @Table(name="EVENT_TIME")
@@ -14,8 +15,12 @@ data class EventTime(
         @JoinColumn(referencedColumnName = "advertisement_id",/*name = "advertisement_id", insertable = false, updatable = false*/)
         //@OnDelete(action = OnDeleteAction.CASCADE)
         val advertisement: Advertisement,
-        val time: String, //возможно нужно date
+        @Temporal(TemporalType.TIME)
+        val time: Calendar,
         val isRepeatable: Boolean,
         val daysOfWeek: String,
-        val date: String
+        @Temporal(TemporalType.DATE)
+        val startDate: Calendar,
+        @Temporal(TemporalType.DATE)
+        val endDate: Calendar
 )

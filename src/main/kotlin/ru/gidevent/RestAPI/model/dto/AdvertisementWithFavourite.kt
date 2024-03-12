@@ -1,11 +1,9 @@
-package ru.gidevent.RestAPI.model.response
+package ru.gidevent.RestAPI.model.dto
 
 import ru.gidevent.RestAPI.model.db.*
-import ru.gidevent.RestAPI.model.dto.AddInfoSeller
-import ru.gidevent.RestAPI.model.dto.TicketPriceDto
 
 
-data class AdvertisementMainInfo(
+data class AdvertisementWithFavourite(
         val id: Long,
         val name: String,
         val duration: Int,
@@ -18,7 +16,6 @@ data class AdvertisementMainInfo(
         val rating: Int,
         val category: Category,
         val city: City,
-        val favourite: Boolean?,
-        val seller: AddInfoSeller,
-        val price: List<TicketPriceResponse>
+        val seller: Seller,
+        val favourite: Favourite?
 )

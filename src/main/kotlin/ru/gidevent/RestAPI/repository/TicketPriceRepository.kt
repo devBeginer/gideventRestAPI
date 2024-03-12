@@ -4,7 +4,6 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
 import ru.gidevent.RestAPI.model.db.TicketPrice
-import ru.gidevent.RestAPI.model.dto.AdvertisementWithPrice
 
 interface TicketPriceRepository: CrudRepository<TicketPrice, Long> {
     @Query(
