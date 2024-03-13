@@ -3,6 +3,7 @@ package ru.gidevent.RestAPI.service
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
+import ru.gidevent.RestAPI.auth.User
 import ru.gidevent.RestAPI.model.db.*
 import ru.gidevent.RestAPI.repository.*
 import ru.gidevent.RestAPI.model.dto.AddInfoSeller
@@ -10,10 +11,7 @@ import ru.gidevent.RestAPI.model.dto.AdvertisementWithFavourite
 import ru.gidevent.RestAPI.model.dto.CitySuggestion
 import ru.gidevent.RestAPI.model.dto.TicketPriceDto
 import ru.gidevent.RestAPI.model.request.SearchOptions
-import ru.gidevent.RestAPI.model.response.AdvertisementMainInfo
-import ru.gidevent.RestAPI.model.response.Suggestions
-import ru.gidevent.RestAPI.model.response.TicketPriceResponse
-import ru.gidevent.RestAPI.model.response.TopsResponse
+import ru.gidevent.RestAPI.model.response.*
 import java.util.*
 
 @Service
@@ -339,6 +337,109 @@ class AdvertisementService {
     }
     fun getAdvertisementById(id: Long): Advertisement?{
         return advertisementRepository.findByIdOrNull(id)
+    }
+
+    fun getExpandedAdvertisementById(id: Long): AdvertisementExpanded?{
+        val advertisement = advertisementRepository.findByIdOrNull(id)
+        val ticketPrice = advertisement?.let { ticketPriceRepository.getTicketPriceByAdvert(it.id) }
+        val eventTime = advertisement?.let { eventTimeRepository.findByAdvertisement(it) }
+        val feedback = advertisement?.let { feedbackRepository.findByFeedbackIdAdvertisement(it) }
+        return advertisement?.let {
+            AdvertisementExpanded(
+                    it.id,
+                    it.name,
+                    it.duration,
+                    it.description,
+                    it.transportation,
+                    it.ageRestrictions,
+                    it.visitorsCount,
+                    it.isIndividual,
+                    it.photos,
+                    it.rating.toFloat(),
+                    it.category,
+                    it.city,
+                    null,
+                    it.seller,
+                    ticketPrice?.map { ticketPriceDto ->
+                        TicketPriceResponse(
+                                ticketPriceDto.priceId,
+                                ticketPriceDto.customerCategory.customerCategoryId,
+                                ticketPriceDto.customerCategory.name,
+                                ticketPriceDto.price
+                        )
+                    },
+                    feedback?.map { feedback ->
+                                  FeedbackResponse(
+                                          "${feedback.feedbackId.user.lastName} ${feedback.feedbackId.user.firstName}",
+                                          "",//feedback.feedbackId.userId.photo,
+                                          feedback.rating,
+                                          feedback.text
+                                  )
+                    },
+                    eventTime?.map{eventTime ->
+                        EventTimeResponse(
+                                eventTime.timeId,
+                                eventTime.time.timeInMillis,
+                                eventTime.isRepeatable,
+                                eventTime.daysOfWeek,
+                                eventTime.startDate.timeInMillis,
+                                eventTime.endDate.timeInMillis
+                        )
+                    }
+            )
+        }
+    }
+    fun getExpandedAdvertisementById(id: Long, user: User): AdvertisementExpanded?{
+        val advertisement = advertisementRepository.findByIdOrNull(id)
+        //val favourite = advertisement?.let { favouriteRepository.findByFavouriteIdAdvertisementIdFavouriteIdUserId(it, user) }
+        val favourite = advertisement?.let { favouriteRepository.findByIdOrNull(FavouriteId(user, it)) }
+        val ticketPrice = advertisement?.let { ticketPriceRepository.getTicketPriceByAdvert(it.id) }
+        val eventTime = advertisement?.let { eventTimeRepository.findByAdvertisement(it) }
+        val feedback = advertisement?.let { feedbackRepository.findByFeedbackIdAdvertisement(it) }
+        return advertisement?.let {
+            AdvertisementExpanded(
+                it.id,
+                it.name,
+                it.duration,
+                it.description,
+                it.transportation,
+                it.ageRestrictions,
+                it.visitorsCount,
+                it.isIndividual,
+                it.photos,
+                it.rating.toFloat(),
+                it.category,
+                it.city,
+                favourite!=null,
+                it.seller,
+                ticketPrice?.map { ticketPriceDto ->
+                    TicketPriceResponse(
+                            ticketPriceDto.priceId,
+                            ticketPriceDto.customerCategory.customerCategoryId,
+                            ticketPriceDto.customerCategory.name,
+                            ticketPriceDto.price
+                    )
+                },
+                feedback?.map { feedback ->
+                    FeedbackResponse(
+                            "${feedback.feedbackId.user.lastName} ${feedback.feedbackId.user.firstName}",
+                            "",//feedback.feedbackId.userId.photo,
+                            feedback.rating,
+                            feedback.text
+                    )
+                },
+                eventTime?.map{eventTime ->
+                    EventTimeResponse(
+                            eventTime.timeId,
+                            eventTime.time.timeInMillis,
+                            eventTime.isRepeatable,
+                            eventTime.daysOfWeek,
+                            eventTime.startDate.timeInMillis,
+                            eventTime.endDate.timeInMillis
+                    )
+                }
+            )
+        }
     }
 
     fun saveAdvertisement(advertisement: Advertisement): Advertisement {

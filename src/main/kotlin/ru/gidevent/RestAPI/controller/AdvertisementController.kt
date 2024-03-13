@@ -50,7 +50,13 @@ class AdvertisementController {
 
     @GetMapping("auth/advertisement/{id}")
     fun advertisementById(@PathVariable id: Long): ResponseEntity<*> {
-        return ResponseEntity.ok(advertisementService.getAdvertisementById(id))
+        return ResponseEntity.ok(advertisementService.getExpandedAdvertisementById(id))
+    }
+
+    @GetMapping("advertisement/{id}")
+    fun advertisementByIdPrivate(@PathVariable id: Long): ResponseEntity<*> {
+        val profile = authService.getUserRecord()
+        return ResponseEntity.ok(advertisementService.getExpandedAdvertisementById(id, profile))
     }
 
     @GetMapping("auth/category/")

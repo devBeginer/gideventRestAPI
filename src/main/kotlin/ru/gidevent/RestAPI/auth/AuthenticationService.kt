@@ -92,4 +92,18 @@ class AuthenticationService(
         }
         throw AuthException("Невалидный JWT токен")
     }
+
+
+    fun getUserRecord(): User {
+        val authentication = SecurityContextHolder.getContext().authentication as JwtAuthentication
+
+        if (authentication.isAuthenticated) {
+            val user = authentication.username?.let { repository.findByLogin(it) }
+
+            if (user != null) {
+                return user.get()
+            }
+        }
+        throw AuthException("Невалидный JWT токен")
+    }
 }

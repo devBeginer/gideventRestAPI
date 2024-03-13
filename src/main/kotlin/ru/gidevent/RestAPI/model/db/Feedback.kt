@@ -6,18 +6,7 @@ import java.io.Serializable
 
 @Entity
 @Table(name="FEEDBACK")
-//@IdClass(FeedbackId::class)
 data class Feedback(
-        /*@Id
-        @ManyToOne(targetEntity = User::class,  fetch= FetchType.EAGER, cascade = [CascadeType.ALL])
-        @JoinColumn(name = "user_id", insertable = false, updatable = false)*/
-        //@OnDelete(action = OnDeleteAction.CASCADE)
-        //val user: User,
-        /*@Id
-        @ManyToOne(targetEntity = Advertisement::class,  fetch= FetchType.EAGER, cascade = [CascadeType.ALL])
-        @JoinColumn(name = "advertisement_id", insertable = false, updatable = false)*/
-        //@OnDelete(action = OnDeleteAction.CASCADE)
-        //val advertisement: Advertisement,
         @EmbeddedId
         val feedbackId: FeedbackId,
         val rating: Int,
@@ -28,10 +17,10 @@ data class Feedback(
 data class FeedbackId(
         @ManyToOne(targetEntity = User::class,  fetch= FetchType.LAZY/*EAGER*/, cascade = [CascadeType.ALL])
         @JoinColumn(referencedColumnName = "user_id",/*name = "user_id", insertable = false, updatable = false*/)
-        val userId: User,
+        val user: User,
         @ManyToOne(targetEntity = Advertisement::class,  fetch= FetchType.LAZY/*EAGER*/, cascade = [CascadeType.ALL])
         @JoinColumn(referencedColumnName = "advertisement_id",/*name = "advertisement_id", insertable = false, updatable = false*/)
-        val advertisementId: Advertisement
+        val advertisement: Advertisement
 ): Serializable {
     override fun equals(other: Any?): Boolean {
         return super.equals(other)
