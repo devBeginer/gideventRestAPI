@@ -81,6 +81,20 @@ interface AdvertisementRepository : CrudRepository<Advertisement, Long> {
                     "FROM Advertisement a " +
                     "LEFT JOIN FETCH Favourite f on f.favouriteId.advertisementId = a AND f.favouriteId.userId.id = :id " +
                     "INNER JOIN FETCH TicketPrice tp on tp.advertisement = a " +
+                    "WHERE a.id = :advertId " +
+                    "ORDER BY a.rating DESC"
+    )
+    fun getAdvertWithExtraById(id: Long, advertId: Long): Iterable<TicketPriceDto>
+
+    @Query(
+            "SELECT new ru.gidevent.RestAPI.model.dto.TicketPriceDto(" +
+                    "tp.id, " +
+                    "new ru.gidevent.RestAPI.model.dto.AdvertisementWithFavourite(a.id, a.name, a.duration, a.description, a.transportation, a.ageRestrictions, a.visitorsCount, a.isIndividual, a.photos, a.rating, a.category, a.city, a.seller, f), " +
+                    "tp.customerCategory, " +
+                    "tp.price) " +
+                    "FROM Advertisement a " +
+                    "LEFT JOIN FETCH Favourite f on f.favouriteId.advertisementId = a AND f.favouriteId.userId.id = :id " +
+                    "INNER JOIN FETCH TicketPrice tp on tp.advertisement = a " +
                     "WHERE a.name LIKE '%' || :query || '%' " +
                     "ORDER BY a.rating DESC"
     )

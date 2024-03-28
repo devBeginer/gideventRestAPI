@@ -16,10 +16,10 @@ data class Feedback(
 @Embeddable
 data class FeedbackId(
         @ManyToOne(targetEntity = User::class,  fetch= FetchType.LAZY/*EAGER*/, cascade = [CascadeType.ALL])
-        @JoinColumn(referencedColumnName = "user_id",/*name = "user_id", insertable = false, updatable = false*/)
+        @JoinColumn(referencedColumnName = "user_id", insertable = false,/*name = "user_id", updatable = false*/)
         val user: User,
         @ManyToOne(targetEntity = Advertisement::class,  fetch= FetchType.LAZY/*EAGER*/, cascade = [CascadeType.ALL])
-        @JoinColumn(referencedColumnName = "advertisement_id",/*name = "advertisement_id", insertable = false, updatable = false*/)
+        @JoinColumn(referencedColumnName = "advertisement_id", insertable = false,/*name = "advertisement_id", updatable = false*/)
         val advertisement: Advertisement
 ): Serializable {
     override fun equals(other: Any?): Boolean {

@@ -7,7 +7,7 @@ import java.io.Serializable
 
 data class CustomerCategoryRequest (
         val customerCategoryId: Long,
-        val advertisementId: Long,
+        //val advertisementId: Long,
         val name: String
 )
 

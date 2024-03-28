@@ -1,19 +1,34 @@
 package ru.gidevent.RestAPI.controller
 
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.core.io.UrlResource
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 import ru.gidevent.RestAPI.auth.AuthenticationService
 import ru.gidevent.RestAPI.model.db.*
 import ru.gidevent.RestAPI.model.request.*
+import ru.gidevent.RestAPI.model.response.NewFavouriteResponse
+import ru.gidevent.RestAPI.model.response.NewFeedbackResponse
 import ru.gidevent.RestAPI.model.response.ResponseMessage
+import ru.gidevent.RestAPI.model.response.ResponsePoster
 import ru.gidevent.RestAPI.service.AdvertisementService
+import java.io.File
+import java.io.FileOutputStream
 import java.util.*
+
 
 @RestController
 @RequestMapping("/api/")
 class AdvertisementController {
+
+    @Value("\${upload.path}")
+    var uploadPath: String? = null
+
     @Autowired
     lateinit var advertisementService: AdvertisementService
     @Autowired
@@ -51,6 +66,11 @@ class AdvertisementController {
     @GetMapping("auth/advertisement/{id}")
     fun advertisementById(@PathVariable id: Long): ResponseEntity<*> {
         return ResponseEntity.ok(advertisementService.getExpandedAdvertisementById(id))
+    }
+
+    @GetMapping("auth/tmp/{id}")
+    fun tmpById(@PathVariable id: Long): ResponseEntity<*> {
+        return ResponseEntity.ok(advertisementService.getAdvertisementById(id))
     }
 
     @GetMapping("advertisement/{id}")
@@ -99,6 +119,11 @@ class AdvertisementController {
         return ResponseEntity.ok(advertisementService.getEventTimeById(id))
     }
 
+    @GetMapping("auth/advertisement/eventTime/{id}")
+    fun eventTimeByAdvertisement(@PathVariable id: Long): ResponseEntity<*> {
+        return ResponseEntity.ok(advertisementService.getEventTimeByAdvertisement(id))
+    }
+
     @GetMapping("auth/feedback/")
     fun feedback(): ResponseEntity<*> {
         return ResponseEntity.ok(advertisementService.allFeedback())
@@ -125,6 +150,11 @@ class AdvertisementController {
         return ResponseEntity.ok(advertisementService.getTicketPriceById(id))
     }
 
+    @GetMapping("auth/advertisement/ticketPrice/{id}")
+    fun ticketPriceByAdvertisement(@PathVariable id: Long): ResponseEntity<*> {
+        return ResponseEntity.ok(advertisementService.getTicketPriceByAdvertisement(id))
+    }
+
     @GetMapping("auth/transportationVariant/")
     fun transportationVariant(): ResponseEntity<*> {
         return ResponseEntity.ok(advertisementService.allTransportationVariant())
@@ -138,10 +168,11 @@ class AdvertisementController {
     //@PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("advertisement/")
     fun postAdvertisement(@RequestBody advertisementRequest: AdvertisementRequest): ResponseEntity<*> {
+        val profile = authService.getUser()
         val transportation = advertisementService.getTransportationVariantById(advertisementRequest.transportation)
         val category = advertisementService.getCategoryById(advertisementRequest.category)
         val city = advertisementService.getCityById(advertisementRequest.city)
-        val seller = advertisementService.getSellerById(advertisementRequest.seller)
+        val seller = advertisementService.getSellerById(profile.id)
 
         return if (transportation != null && category != null && city != null && seller != null) {
             val newAdvertisement = advertisementService.saveAdvertisement(
@@ -171,28 +202,29 @@ class AdvertisementController {
     //@PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping("advertisement/")
     fun updateAdvertisement(@RequestBody advertisementRequest: AdvertisementRequest): ResponseEntity<*> {
+        val profile = authService.getUser()
         val transportation = advertisementService.getTransportationVariantById(advertisementRequest.transportation)
         val category = advertisementService.getCategoryById(advertisementRequest.category)
         val city = advertisementService.getCityById(advertisementRequest.city)
-        val seller = advertisementService.getSellerById(advertisementRequest.seller)
+        val seller = advertisementService.getSellerById(profile.id)
 
         return if (transportation != null && category != null && city != null && seller != null) {
             val newAdvertisement = advertisementService.updateAdvertisement(advertisementRequest.id,
-                    Advertisement(
-                            advertisementRequest.id,
-                            advertisementRequest.name,
-                            advertisementRequest.duration,
-                            advertisementRequest.description,
-                            transportation,
-                            advertisementRequest.ageRestrictions,
-                            advertisementRequest.visitorsCount,
-                            advertisementRequest.isIndividual,
-                            advertisementRequest.photos,
-                            advertisementRequest.rating,
-                            category,
-                            city,
-                            seller
-                    )
+                Advertisement(
+                    advertisementRequest.id,
+                    advertisementRequest.name,
+                    advertisementRequest.duration,
+                    advertisementRequest.description,
+                    transportation,
+                    advertisementRequest.ageRestrictions,
+                    advertisementRequest.visitorsCount,
+                    advertisementRequest.isIndividual,
+                    advertisementRequest.photos,
+                    advertisementRequest.rating,
+                    category,
+                    city,
+                    seller
+                )
             )
             ResponseEntity.ok(newAdvertisement)
         } else {
@@ -253,7 +285,7 @@ class AdvertisementController {
     //@PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("customerCategory/")
     fun postCustomerCategory(@RequestBody customerCategory: CustomerCategoryRequest): ResponseEntity<*> {
-        val advertisement = advertisementService.getAdvertisementById(customerCategory.advertisementId)
+        /*val advertisement = advertisementService.getAdvertisementById(customerCategory.advertisementId)
 
 
         return if (advertisement != null) {
@@ -265,8 +297,12 @@ class AdvertisementController {
             ResponseEntity.ok(newCategory)
         } else {
             ResponseEntity(ResponseMessage("advertisement is not exist"), HttpStatus.BAD_REQUEST)
-        }
-
+        }*/
+        val newCategory = advertisementService.saveCustomerCategory(CustomerCategory(
+                customerCategoryId = customerCategory.customerCategoryId,
+                name = customerCategory.name
+        ))
+        return ResponseEntity.ok(newCategory)
 
     }
 
@@ -275,7 +311,7 @@ class AdvertisementController {
     @PutMapping("customerCategory/")
     fun updateCustomerCategory(@RequestBody customerCategory: CustomerCategoryRequest): ResponseEntity<*> {
 
-        val advertisement = advertisementService.getAdvertisementById(customerCategory.advertisementId)
+        /*val advertisement = advertisementService.getAdvertisementById(customerCategory.advertisementId)
 
 
         return if (advertisement != null) {
@@ -287,13 +323,19 @@ class AdvertisementController {
             ResponseEntity.ok(newCategory)
         } else {
             ResponseEntity(ResponseMessage("advertisement is not exist"), HttpStatus.BAD_REQUEST)
-        }
+        }*/
+        val newCategory = advertisementService.updateCustomerCategory(customerCategory.customerCategoryId, CustomerCategory(
+                customerCategoryId = customerCategory.customerCategoryId,
+                name = customerCategory.name
+        ))
+        return ResponseEntity.ok(newCategory)
 
     }
 
     //@PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("eventTime/")
     fun postEventTime(@RequestBody eventTimeRequest: EventTimeRequest): ResponseEntity<*> {
+        println("-----ID-----${eventTimeRequest.advertisement}")
         val advertisement = advertisementService.getAdvertisementById(eventTimeRequest.advertisement)
         val startDate = Calendar.getInstance(Locale.getDefault())
         startDate.timeInMillis = eventTimeRequest.startDate
@@ -456,4 +498,129 @@ class AdvertisementController {
     }
 
 
+    @PostMapping(path = ["photo/"], consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    fun postPoster(@RequestParam("file") file: MultipartFile): ResponseEntity<*> {
+        val uploadDir = File(uploadPath)
+        if (!uploadDir.exists()) uploadDir.mkdir()
+
+        val fileUUID = UUID.randomUUID().toString() + ".jpeg"
+        val image = File(uploadPath, fileUUID)
+        image.createNewFile()
+
+        FileOutputStream(image).buffered().use { output->
+            output.write(file.bytes)
+        }
+
+        return if (true) {
+            ResponseEntity.ok(ResponsePoster(fileUUID))
+        } else {
+            ResponseEntity(ResponseMessage("File is not uploaded"), HttpStatus.BAD_REQUEST)
+        }
+    }
+
+
+
+    @GetMapping("auth/photo/{fileUUID:.+}")
+    fun initPoster(@PathVariable fileUUID: String): ResponseEntity<*> {
+        var file = File("$uploadPath/$fileUUID")
+
+        return if (file.exists()) {
+            ResponseEntity.ok().header(
+                    HttpHeaders.CONTENT_DISPOSITION,
+                    "inline; filename=\"${file.name}\"") //attachment
+                    .contentType(MediaType.IMAGE_JPEG)
+                    .body(UrlResource(file.toURI()))
+            //.body(InputStreamResource(file.inputStream()))
+        } else {
+            ResponseEntity(ResponseMessage("file is not exist"), HttpStatus.NOT_FOUND)
+        }
+    }
+
+    @PostMapping("favourite/")
+    fun postFavouriteRequest(@RequestParam("advertisementId") advertisementId: Long): ResponseEntity<*> {
+        val profile = authService.getUserRecord()
+
+        val advertisement = advertisementService.getAdvertisementById(advertisementId)
+
+
+        return if (advertisement != null) {
+
+            val newFavourite = advertisement.let { advert->
+                val favourite = advertisementService.getFavourite(FavouriteId(profile, advert))
+                if(favourite==null){
+                    advertisementService.saveFavourite(Favourite(FavouriteId(profile, advert)))
+                }else{
+                    advertisementService.deleteFavourite(Favourite(FavouriteId(profile, advert)))
+                    null
+                }
+            }
+
+            val advert = advertisementService.getAdvertisementById(profile.id, advertisement.id)
+            ResponseEntity.ok(advert)
+
+
+        } else {
+            ResponseEntity(ResponseMessage("advertisement is not exist"), HttpStatus.BAD_REQUEST)
+        }
+
+    }
+
+    @DeleteMapping("favourite/")
+    fun deleteFavouriteRequest(@RequestParam("advertisementId") advertisementId: Long): ResponseEntity<*> {
+        val profile = authService.getUserRecord()
+
+        val advertisement = advertisementService.getAdvertisementById(advertisementId)
+
+
+        return if (advertisement != null) {
+            advertisement.let { advert->advertisementService.deleteFavourite(
+                    Favourite(FavouriteId(profile, advert))
+            ) }
+            ResponseEntity.ok("Disliked")
+        } else {
+            ResponseEntity(ResponseMessage("advertisement is not exist"), HttpStatus.BAD_REQUEST)
+        }
+
+    }
+
+    @PostMapping("feedback/")
+    fun postFeedbackRequest(@RequestBody feedbackRequest: FeedbackRequest): ResponseEntity<*> {
+        val profile = authService.getUserRecord()
+
+        val advertisement = advertisementService.getAdvertisementById(feedbackRequest.advertisementId)
+
+
+        return if (advertisement != null) {
+            val newFeedback = advertisement.let { advert->advertisementService.saveFeedback(
+                    Feedback(FeedbackId(profile, advert), feedbackRequest.rating, feedbackRequest.text)
+            ) }
+            ResponseEntity.ok(NewFeedbackResponse(newFeedback.rating, newFeedback.text))
+        } else {
+            ResponseEntity(ResponseMessage("advertisement is not exist"), HttpStatus.BAD_REQUEST)
+        }
+
+    }
+
+
+    @PutMapping("feedback/")
+    fun updateFeedbackRequest(@RequestBody feedbackRequest: FeedbackRequest): ResponseEntity<*> {
+
+        val profile = authService.getUserRecord()
+
+        val advertisement = advertisementService.getAdvertisementById(feedbackRequest.advertisementId)
+
+        return if (advertisement != null) {
+            val newFeedback = advertisementService.updateFeedback(FeedbackId(profile, advertisement),
+                    Feedback(FeedbackId(profile, advertisement), feedbackRequest.rating, feedbackRequest.text)
+            )
+            if(newFeedback!=null){
+                ResponseEntity.ok(NewFeedbackResponse(newFeedback.rating, newFeedback.text))
+            }else{
+                ResponseEntity(ResponseMessage("feedback is not exist"), HttpStatus.BAD_REQUEST)
+            }
+        } else {
+            ResponseEntity(ResponseMessage("advertisement is not exist"), HttpStatus.BAD_REQUEST)
+        }
+
+    }
 }

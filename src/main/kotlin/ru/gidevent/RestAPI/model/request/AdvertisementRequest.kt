@@ -14,6 +14,5 @@ data class AdvertisementRequest(
         val photos: String,
         val rating: Int,
         val category: Long,
-        val city: Long,
-        val seller: Long
+        val city: Long
 )

@@ -10,6 +10,7 @@ import ru.gidevent.RestAPI.model.dto.AddInfoSeller
 import ru.gidevent.RestAPI.model.dto.AdvertisementWithFavourite
 import ru.gidevent.RestAPI.model.dto.CitySuggestion
 import ru.gidevent.RestAPI.model.dto.TicketPriceDto
+import ru.gidevent.RestAPI.model.request.FeedbackRequest
 import ru.gidevent.RestAPI.model.request.SearchOptions
 import ru.gidevent.RestAPI.model.response.*
 import java.util.*
@@ -244,8 +245,9 @@ class AdvertisementService {
 
     fun allAdvertisements(): Iterable<AdvertisementMainInfo>{
         val advertisementList = advertisementRepository.getAdvertWithExtra(/*id*/)
-
+        println(advertisementList.toList().size)
         val groupedList = advertisementList.groupBy { it.advertisement }
+        println(groupedList.toList().size)
 
         return groupedList.map { advertisement->
             parseAdvertMainInfo(advertisement)
@@ -335,8 +337,19 @@ class AdvertisementService {
                 }
         )
     }
+
+
     fun getAdvertisementById(id: Long): Advertisement?{
         return advertisementRepository.findByIdOrNull(id)
+    }
+
+    fun getAdvertisementById(id: Long, advertId: Long): AdvertisementMainInfo?{
+        val advertisementList = advertisementRepository.getAdvertWithExtraById(id, advertId)
+
+        val groupedList = advertisementList.groupBy { it.advertisement }
+
+        return parseAdvertMainInfo(groupedList.entries.first())
+
     }
 
     fun getExpandedAdvertisementById(id: Long): AdvertisementExpanded?{
@@ -522,13 +535,44 @@ class AdvertisementService {
         return eventTimeRepository.findByIdOrNull(id)
     }
 
-    fun saveEventTime(eventTime: EventTime): EventTime {
-        return eventTimeRepository.save(eventTime)
+    fun getEventTimeByAdvertisement(id: Long): Iterable<EventTimeResponse>?{
+        val advertisement = advertisementRepository.findByIdOrNull(id)
+        val eventTime = advertisement?.let { eventTimeRepository.findByAdvertisement(it) }
+        return eventTime?.map { eventTime ->
+            EventTimeResponse(
+                    eventTime.timeId,
+                    eventTime.time.timeInMillis,
+                    eventTime.isRepeatable,
+                    eventTime.daysOfWeek,
+                    eventTime.startDate.timeInMillis,
+                    eventTime.endDate.timeInMillis
+            )
+        }
     }
 
-    fun updateEventTime(id: Long, eventTime: EventTime): EventTime?{
+    fun saveEventTime(eventTime: EventTime): EventTimeResponse {
+        val savedEventTime = eventTimeRepository.save(eventTime)
+        return EventTimeResponse(
+                savedEventTime.timeId,
+                savedEventTime.time.timeInMillis,
+                savedEventTime.isRepeatable,
+                savedEventTime.daysOfWeek,
+                savedEventTime.startDate.timeInMillis,
+                savedEventTime.endDate.timeInMillis
+        )
+    }
+
+    fun updateEventTime(id: Long, eventTime: EventTime): EventTimeResponse?{
         return if(eventTimeRepository.existsById(id)){
-            eventTimeRepository.save(eventTime)
+            val savedEventTime = eventTimeRepository.save(eventTime)
+            EventTimeResponse(
+                    savedEventTime.timeId,
+                    savedEventTime.time.timeInMillis,
+                    savedEventTime.isRepeatable,
+                    savedEventTime.daysOfWeek,
+                    savedEventTime.startDate.timeInMillis,
+                    savedEventTime.endDate.timeInMillis
+            )
         }else{
             null
         }
@@ -552,6 +596,18 @@ class AdvertisementService {
         }else{
             null
         }
+    }
+
+    fun getFavourite(favouriteId: FavouriteId): Favourite? {
+        return favouriteRepository.findByIdOrNull(favouriteId)
+    }
+
+    fun saveFavourite(favourite: Favourite): Favourite {
+        return favouriteRepository.save(favourite)
+    }
+
+    fun deleteFavourite(favourite: Favourite) {
+        return favouriteRepository.delete(favourite)
     }
 
     fun allSeller(): Iterable<Seller>{
@@ -584,6 +640,11 @@ class AdvertisementService {
 
     fun getTicketPriceById(id: Long): TicketPrice?{
         return ticketPriceRepository.findByIdOrNull(id)
+    }
+
+    fun getTicketPriceByAdvertisement(id: Long): Iterable<TicketPrice>? {
+        val advertisement = advertisementRepository.findByIdOrNull(id)
+        return advertisement?.let { ticketPriceRepository.getTicketPriceByAdvert(it.id) }
     }
 
     fun saveTicketPrice(ticketPrice: TicketPrice): TicketPrice {

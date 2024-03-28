@@ -8,7 +8,7 @@ data class Advertisement(
         @Id
         @GeneratedValue(strategy = GenerationType.AUTO)
         @Column(name = "advertisement_id")
-        val id: Long,
+        val id: Long=0,
         val name: String,
         val duration: Int,
         val description: String,
