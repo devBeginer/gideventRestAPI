@@ -12,10 +12,7 @@ import org.springframework.web.multipart.MultipartFile
 import ru.gidevent.RestAPI.auth.AuthenticationService
 import ru.gidevent.RestAPI.model.db.*
 import ru.gidevent.RestAPI.model.request.*
-import ru.gidevent.RestAPI.model.response.NewFavouriteResponse
-import ru.gidevent.RestAPI.model.response.NewFeedbackResponse
-import ru.gidevent.RestAPI.model.response.ResponseMessage
-import ru.gidevent.RestAPI.model.response.ResponsePoster
+import ru.gidevent.RestAPI.model.response.*
 import ru.gidevent.RestAPI.service.AdvertisementService
 import java.io.File
 import java.io.FileOutputStream
@@ -563,6 +560,66 @@ class AdvertisementController {
             ResponseEntity(ResponseMessage("advertisement is not exist"), HttpStatus.BAD_REQUEST)
         }
 
+    }
+
+    @GetMapping("bookingParams/")
+    fun getBookingParamsRequest(@RequestParam("advertisementId") advertisementId: Long, @RequestParam("date") dateParam: Long): ResponseEntity<*> {
+        val profile = authService.getUserRecord()
+        val date = Calendar.getInstance(Locale.getDefault())
+        date.timeInMillis = dateParam
+        val ticketPrice = advertisementService.getTicketPriceByAdvertisement(advertisementId)
+        val eventTimeList = advertisementService.getEmptyEventTimeByAdvertisement(advertisementId, date)
+
+        return if (ticketPrice != null && eventTimeList != null) {
+            ResponseEntity.ok(BookingParamsResponse(eventTimeList, ticketPrice.toList()))
+        } else {
+            ResponseEntity(ResponseMessage("ticketPrice or eventTimeList is not exist"), HttpStatus.BAD_REQUEST)
+        }
+    }
+
+    @PostMapping("booking/")
+    fun postBookingRequest(@RequestBody bookingRequest: BookingRequest): ResponseEntity<*> {
+        val profile = authService.getUserRecord()
+        val advertisement = advertisementService.getAdvertisementById(bookingRequest.advertisement)
+        val eventTime = advertisementService.getEventTimeById(bookingRequest.eventTime)
+        val bookingTime = Calendar.getInstance(Locale.getDefault())
+        val date = Calendar.getInstance(Locale.getDefault())
+        date.timeInMillis = bookingRequest.date
+        return if (advertisement != null && eventTime != null) {
+            val booking = advertisementService.saveBooking(
+                    Booking(
+                            0,
+                            eventTime,
+                            profile,
+                            advertisement,
+                            bookingTime,
+                            date,
+                            bookingRequest.totalPrice,
+                            bookingRequest.idApproved
+                    )
+            )
+
+            bookingRequest.groups.forEach {
+                val customerCategory = advertisementService.getCustomerCategoryById(it.id)
+                if (customerCategory != null) {
+                    val group = advertisementService.saveGroup(Group(0, customerCategory, it.count, booking))
+                }
+            }
+            ResponseEntity.ok(
+                    BookingResponse(
+                            booking.id,
+                            booking.eventTime.timeId,
+                            booking.user.id,
+                            booking.advertisement.id,
+                            booking.bookingTime.timeInMillis,
+                            booking.date.timeInMillis,
+                            booking.totalPrice,
+                            booking.idApproved
+                    )
+            )
+        } else {
+            ResponseEntity(ResponseMessage("advertisement or eventTimeList is not exist"), HttpStatus.BAD_REQUEST)
+        }
     }
 
     @DeleteMapping("favourite/")

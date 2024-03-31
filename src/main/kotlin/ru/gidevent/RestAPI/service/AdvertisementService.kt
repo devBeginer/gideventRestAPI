@@ -48,6 +48,12 @@ class AdvertisementService {
     @Autowired
     lateinit var favouriteRepository: FavouriteRepository
 
+    @Autowired
+    lateinit var groupRepository: GroupRepository
+
+    @Autowired
+    lateinit var bookingRepository: BookingRepository
+
     fun getAdvertisementByName(id: Long, query: String): Iterable<AdvertisementMainInfo> {
         val advertisementList = advertisementRepository.getAdvertWithExtraByName(id, query)
 
@@ -101,23 +107,25 @@ class AdvertisementService {
         }
         val dayCount = if(dateTo!=null && dateFrom!=null){
             val count = (dateTo.timeInMillis-dateFrom.timeInMillis)/(24 * 60 * 60 * 1000) + 1
-            if (count>7) count+7 else count
+            if (count>7) 7 else count
         } else {
             null
         }
 
         val weekDays = mutableListOf<String?>(null, null, null, null, null, null, null)
 
-        if(dayCount!=null) {
-            for (i in 1 until dayCount.toInt()) {
-                when (i) {
-                    1 -> {weekDays[0]="Monday "}
-                    2 -> {weekDays[1]="Tuesday"}
-                    3 -> {weekDays[2]="Wednesday"}
-                    4 -> {weekDays[3]="Thursday"}
-                    5 -> {weekDays[4]="Friday "}
-                    6 -> {weekDays[5]="Saturday"}
-                    7 -> {weekDays[6]="Sunday "}
+        if(dayCount!=null && dateTo!=null && dateFrom!=null) {
+            val start = dateFrom.get(Calendar.DAY_OF_WEEK)
+            val end = start + dayCount.toInt()
+            for (i in start until end) {
+                when (i%7) {
+                    0 -> {weekDays[5]="Saturday"}
+                    1 -> {weekDays[6]="Sunday"}
+                    2 -> {weekDays[0]="Monday"}
+                    3 -> {weekDays[1]="Tuesday"}
+                    4 -> {weekDays[2]="Wednesday"}
+                    5 -> {weekDays[3]="Thursday"}
+                    6 -> {weekDays[4]="Friday"}
                 }
             }
         }
@@ -178,23 +186,25 @@ class AdvertisementService {
         }
         val dayCount = if(dateTo!=null && dateFrom!=null){
             val count = (dateTo.timeInMillis-dateFrom.timeInMillis)/(24 * 60 * 60 * 1000) + 1
-            if (count>7) count+7 else count
+            if (count>7) 7 else count
         } else {
             null
         }
 
         val weekDays = mutableListOf<String?>(null, null, null, null, null, null, null)
 
-        if(dayCount!=null) {
-            for (i in 1 until dayCount.toInt()) {
-                when (i) {
-                    1 -> {weekDays[0]="Monday "}
-                    2 -> {weekDays[1]="Tuesday"}
-                    3 -> {weekDays[2]="Wednesday"}
-                    4 -> {weekDays[3]="Thursday"}
-                    5 -> {weekDays[4]="Friday "}
-                    6 -> {weekDays[5]="Saturday"}
-                    7 -> {weekDays[6]="Sunday "}
+        if(dayCount!=null && dateTo!=null && dateFrom!=null) {
+            val start = dateFrom.get(Calendar.DAY_OF_WEEK)
+            val end = start + dayCount.toInt()
+            for (i in start until end) {
+                when (i%7) {
+                    0 -> {weekDays[5]="Saturday"}
+                    1 -> {weekDays[6]="Sunday"}
+                    2 -> {weekDays[0]="Monday"}
+                    3 -> {weekDays[1]="Tuesday"}
+                    4 -> {weekDays[2]="Wednesday"}
+                    5 -> {weekDays[3]="Thursday"}
+                    6 -> {weekDays[4]="Friday"}
                 }
             }
         }
@@ -550,6 +560,64 @@ class AdvertisementService {
         }
     }
 
+    fun getEmptyEventTimeByAdvertisement(id: Long, date: Calendar): List<EventTimeWithCountResponse>?{
+        val advertisement = advertisementRepository.findByIdOrNull(id)
+        val weekDate = date.get(Calendar.DAY_OF_WEEK)
+        val stringWeekDay = when(weekDate){
+            1 -> "Sunday"
+            2 -> "Monday"
+            3 -> "Tuesday"
+            4 -> "Wednesday"
+            5 -> "Thursday"
+            6 -> "Friday"
+            7 -> "Saturday"
+            else -> ""
+        }
+        val bookings = advertisement?.let { groupRepository.getByAdvetAndDate(it, date) }
+                ?.groupBy { it.booking.eventTime }
+        val busyTime = bookings?.entries?.filter {
+            var totalCount = 0
+            it.value.forEach { group->totalCount += group.count }
+            totalCount >= it.key.advertisement.visitorsCount
+        }?.map { it.key }
+
+        val emptyCount = bookings?.entries?.filter {
+            var totalCount = 0
+            it.value.forEach { group->totalCount += group.count }
+            totalCount < it.key.advertisement.visitorsCount
+        }?.map {
+            var totalCount = 0
+            it.value.forEach { group->totalCount += group.count }
+            Pair(it.key, it.key.advertisement.visitorsCount - totalCount)
+        }
+        val eventTime = advertisement?.let { eventTimeRepository.findByAdvertisement(it) }
+                ?.toList()
+                ?.filter {
+                    it.startDate == date
+                            || it.endDate == date
+                            || (date.before(it.endDate) && date.after(it.startDate) && it.daysOfWeek.contains(stringWeekDay))
+                }
+                ?.filter {
+                    if(busyTime!=null){
+                        !busyTime.contains(it)
+                    }else{
+                        true
+                    }
+                }
+        return eventTime?.map { eventTime ->
+            val count = emptyCount?.find { it.first == eventTime }?.second ?: 0
+            EventTimeWithCountResponse(
+                    eventTime.timeId,
+                    eventTime.time.timeInMillis,
+                    eventTime.isRepeatable,
+                    eventTime.daysOfWeek,
+                    eventTime.startDate.timeInMillis,
+                    eventTime.endDate.timeInMillis,
+                    count
+            )
+        }
+    }
+
     fun saveEventTime(eventTime: EventTime): EventTimeResponse {
         val savedEventTime = eventTimeRepository.save(eventTime)
         return EventTimeResponse(
@@ -677,5 +745,49 @@ class AdvertisementService {
         }else{
             null
         }
+    }
+
+
+
+    fun saveBooking(booking: Booking): Booking {
+        return bookingRepository.save(booking)
+    }
+
+    fun updateBooking(id: Long, booking: Booking): Booking?{
+        return if(bookingRepository.existsById(id)){
+            bookingRepository.save(booking)
+        }else{
+            null
+        }
+    }
+
+    fun getBookingById(id: Long): Booking?{
+        return bookingRepository.findByIdOrNull(id)
+    }
+
+    fun getBookingByAdvertisement(advertisement: Advertisement): Iterable<Booking>{
+        return bookingRepository.findByAdvertisement(advertisement)
+    }
+
+
+
+    fun saveGroup(group: Group): Group {
+        return groupRepository.save(group)
+    }
+
+    fun updateGroup(id: Long, group: Group): Group?{
+        return if(bookingRepository.existsById(id)){
+            groupRepository.save(group)
+        }else{
+            null
+        }
+    }
+
+    fun getGroupById(id: Long): Group?{
+        return groupRepository.findByIdOrNull(id)
+    }
+
+    fun getGroupByBooking(booking: Booking): Iterable<Group>{
+        return groupRepository.findByBooking(booking)
     }
 }
