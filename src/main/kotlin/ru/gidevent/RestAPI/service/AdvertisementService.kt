@@ -10,7 +10,6 @@ import ru.gidevent.RestAPI.model.dto.AddInfoSeller
 import ru.gidevent.RestAPI.model.dto.AdvertisementWithFavourite
 import ru.gidevent.RestAPI.model.dto.CitySuggestion
 import ru.gidevent.RestAPI.model.dto.TicketPriceDto
-import ru.gidevent.RestAPI.model.request.FeedbackRequest
 import ru.gidevent.RestAPI.model.request.SearchOptions
 import ru.gidevent.RestAPI.model.response.*
 import java.util.*
@@ -255,9 +254,8 @@ class AdvertisementService {
 
     fun allAdvertisements(): Iterable<AdvertisementMainInfo>{
         val advertisementList = advertisementRepository.getAdvertWithExtra(/*id*/)
-        println(advertisementList.toList().size)
         val groupedList = advertisementList.groupBy { it.advertisement }
-        println(groupedList.toList().size)
+
 
         return groupedList.map { advertisement->
             parseAdvertMainInfo(advertisement)
@@ -573,7 +571,7 @@ class AdvertisementService {
             7 -> "Saturday"
             else -> ""
         }
-        val bookings = advertisement?.let { groupRepository.getByAdvetAndDate(it, date) }
+        val bookings = advertisement?.let { groupRepository.getByAdvertAndDate(it, date) }
                 ?.groupBy { it.booking.eventTime }
         val busyTime = bookings?.entries?.filter {
             var totalCount = 0
@@ -605,7 +603,7 @@ class AdvertisementService {
                     }
                 }
         return eventTime?.map { eventTime ->
-            val count = emptyCount?.find { it.first == eventTime }?.second ?: 0
+            val count = emptyCount?.find { it.first.timeId == eventTime.timeId }?.second ?: eventTime.advertisement.visitorsCount
             EventTimeWithCountResponse(
                     eventTime.timeId,
                     eventTime.time.timeInMillis,
@@ -771,23 +769,23 @@ class AdvertisementService {
 
 
 
-    fun saveGroup(group: Group): Group {
-        return groupRepository.save(group)
+    fun saveGroup(visitorsGroup: VisitorsGroup): VisitorsGroup {
+        return groupRepository.save(visitorsGroup)
     }
 
-    fun updateGroup(id: Long, group: Group): Group?{
+    fun updateGroup(id: Long, visitorsGroup: VisitorsGroup): VisitorsGroup?{
         return if(bookingRepository.existsById(id)){
-            groupRepository.save(group)
+            groupRepository.save(visitorsGroup)
         }else{
             null
         }
     }
 
-    fun getGroupById(id: Long): Group?{
+    fun getGroupById(id: Long): VisitorsGroup?{
         return groupRepository.findByIdOrNull(id)
     }
 
-    fun getGroupByBooking(booking: Booking): Iterable<Group>{
+    fun getGroupByBooking(booking: Booking): Iterable<VisitorsGroup>{
         return groupRepository.findByBooking(booking)
     }
 }

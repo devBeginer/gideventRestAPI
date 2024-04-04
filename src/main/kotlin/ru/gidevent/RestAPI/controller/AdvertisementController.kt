@@ -152,6 +152,11 @@ class AdvertisementController {
         return ResponseEntity.ok(advertisementService.getTicketPriceByAdvertisement(id))
     }
 
+    @GetMapping("auth/advertisement/emptyTime/{id}")
+    fun emptyTimeByAdvertisement(@PathVariable id: Long): ResponseEntity<*> {
+        return ResponseEntity.ok(advertisementService.getEmptyEventTimeByAdvertisement(id, Calendar.getInstance(Locale.getDefault())))
+    }
+
     @GetMapping("auth/transportationVariant/")
     fun transportationVariant(): ResponseEntity<*> {
         return ResponseEntity.ok(advertisementService.allTransportationVariant())
@@ -332,7 +337,6 @@ class AdvertisementController {
     //@PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("eventTime/")
     fun postEventTime(@RequestBody eventTimeRequest: EventTimeRequest): ResponseEntity<*> {
-        println("-----ID-----${eventTimeRequest.advertisement}")
         val advertisement = advertisementService.getAdvertisementById(eventTimeRequest.advertisement)
         val startDate = Calendar.getInstance(Locale.getDefault())
         startDate.timeInMillis = eventTimeRequest.startDate
@@ -602,7 +606,7 @@ class AdvertisementController {
             bookingRequest.groups.forEach {
                 val customerCategory = advertisementService.getCustomerCategoryById(it.id)
                 if (customerCategory != null) {
-                    val group = advertisementService.saveGroup(Group(0, customerCategory, it.count, booking))
+                    val visitorsGroup = advertisementService.saveGroup(VisitorsGroup(0, customerCategory, it.count, booking))
                 }
             }
             ResponseEntity.ok(

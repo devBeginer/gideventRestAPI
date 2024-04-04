@@ -20,7 +20,9 @@ data class Booking(
         @ManyToOne(targetEntity = Advertisement::class, fetch= FetchType.LAZY/*EAGER*/)
         @JoinColumn(referencedColumnName = "advertisement_id")
         val advertisement: Advertisement,
+        @Temporal(TemporalType.DATE)
         val bookingTime: Calendar,
+        @Temporal(TemporalType.DATE)
         val date: Calendar,
         val totalPrice: Int,
         val idApproved: Boolean

@@ -7,7 +7,7 @@ import ru.gidevent.RestAPI.model.db.TicketPrice
 
 interface TicketPriceRepository: CrudRepository<TicketPrice, Long> {
     @Query(
-            "SELECT * FROM TICKET_PRICE WHERE TICKET_PRICE.advertisement_id = :advertId", nativeQuery = true
+            "SELECT tp FROM TicketPrice tp WHERE tp.advertisement.id = :advertId"//, nativeQuery = true
     )
     fun getTicketPriceByAdvert(@Param("advertId") advertId: Long): Iterable<TicketPrice>
 }
