@@ -582,7 +582,7 @@ class AdvertisementService {
         val emptyCount = bookings?.entries?.filter {
             var totalCount = 0
             it.value.forEach { group->totalCount += group.count }
-            totalCount < it.key.advertisement.visitorsCount
+            totalCount <= it.key.advertisement.visitorsCount
         }?.map {
             var totalCount = 0
             it.value.forEach { group->totalCount += group.count }
@@ -614,6 +614,11 @@ class AdvertisementService {
                     count
             )
         }
+    }
+
+    fun getBookings(): List<Booking>?{
+        val booking = bookingRepository.findAll()
+        return booking.toList()
     }
 
     fun saveEventTime(eventTime: EventTime): EventTimeResponse {

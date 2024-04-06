@@ -604,7 +604,7 @@ class AdvertisementController {
             )
 
             bookingRequest.groups.forEach {
-                val customerCategory = advertisementService.getCustomerCategoryById(it.id)
+                val customerCategory = advertisementService.getCustomerCategoryById(it.customerCategory)
                 if (customerCategory != null) {
                     val visitorsGroup = advertisementService.saveGroup(VisitorsGroup(0, customerCategory, it.count, booking))
                 }

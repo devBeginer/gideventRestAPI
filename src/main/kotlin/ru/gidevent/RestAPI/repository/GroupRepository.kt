@@ -12,8 +12,8 @@ interface GroupRepository: CrudRepository<VisitorsGroup, Long> {
 
     @Query(
             "SELECT g FROM VisitorsGroup g " +
-                    "WHERE g.booking.bookingTime = :date " +
-                    "AND g.booking.advertisement = :advertisement"//, nativeQuery = true
+                    "WHERE g.booking.date = :date " +
+                    "AND g.booking.advertisement = :advertisement"
     )
     fun getByAdvertAndDate(advertisement: Advertisement, date: Calendar): Iterable<VisitorsGroup>
 }
