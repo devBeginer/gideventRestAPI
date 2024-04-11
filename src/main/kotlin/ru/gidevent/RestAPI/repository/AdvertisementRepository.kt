@@ -31,6 +31,8 @@ interface AdvertisementRepository : CrudRepository<Advertisement, Long> {
     // найти первые 5 по FirstName начинающихся с символов и сортировать по FirstName
     //fun findFirst5ByFirstNameStartsWithOrderByFirstName(firstNameStartsWith: String?): List<Employees?>?
 
+    fun findBySeller(seller: Seller): List<Advertisement>
+
     @Query(
             "SELECT new ru.gidevent.RestAPI.model.dto.AdvertisementWithPrice(a.id, a.name, a.duration, a.description, a.transportation, a.ageRestrictions, a.visitorsCount, a.isIndividual, a.photos, a.rating, a.category, a.city, a.seller, tp) " +
                     "FROM Advertisement a " +

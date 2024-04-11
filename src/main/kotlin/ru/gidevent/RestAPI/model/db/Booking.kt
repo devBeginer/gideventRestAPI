@@ -25,5 +25,5 @@ data class Booking(
         @Temporal(TemporalType.DATE)
         val date: Calendar,
         val totalPrice: Int,
-        val idApproved: Boolean
+        val isApproved: Boolean = false
 )

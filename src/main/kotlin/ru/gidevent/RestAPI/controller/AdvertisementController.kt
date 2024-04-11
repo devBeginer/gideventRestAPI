@@ -60,6 +60,12 @@ class AdvertisementController {
         return ResponseEntity.ok(advertisementService.favouriteAdvertisements(profile.id))
     }
 
+    @GetMapping("advertisement/purchases")
+    fun reservedAdvertisement(): ResponseEntity<*> {
+        val profile = authService.getUser()
+        return ResponseEntity.ok(advertisementService.reservedAdvertisements(profile.id))
+    }
+
     @GetMapping("auth/advertisement/{id}")
     fun advertisementById(@PathVariable id: Long): ResponseEntity<*> {
         return ResponseEntity.ok(advertisementService.getExpandedAdvertisementById(id))
@@ -599,7 +605,7 @@ class AdvertisementController {
                             bookingTime,
                             date,
                             bookingRequest.totalPrice,
-                            bookingRequest.idApproved
+                            bookingRequest.isApproved
                     )
             )
 
@@ -618,11 +624,177 @@ class AdvertisementController {
                             booking.bookingTime.timeInMillis,
                             booking.date.timeInMillis,
                             booking.totalPrice,
-                            booking.idApproved
+                            booking.isApproved
                     )
             )
         } else {
             ResponseEntity(ResponseMessage("advertisement or eventTimeList is not exist"), HttpStatus.BAD_REQUEST)
+        }
+    }
+
+    @PostMapping("confirmBooking/")
+    fun postConfirmBookingRequest(@RequestParam("bookingId") bookingId: Long): ResponseEntity<*> {
+        val profile = authService.getUserRecord()
+
+        val booking = advertisementService.getBookingById(bookingId)
+
+        return if (booking != null) {
+            val newBooking = advertisementService.updateBooking(
+                    bookingId,
+                    Booking(
+                            booking.id,
+                            booking.eventTime,
+                            booking.user,
+                            booking.advertisement,
+                            booking.bookingTime,
+                            booking.date,
+                            booking.totalPrice,
+                            !booking.isApproved
+                    )
+            )
+
+            if(newBooking!=null) {
+                ResponseEntity.ok(BookingResponse(
+                        newBooking.id,
+                        newBooking.eventTime.timeId,
+                        newBooking.user.id,
+                        newBooking.advertisement.id,
+                        newBooking.bookingTime.timeInMillis,
+                        newBooking.date.timeInMillis,
+                        newBooking.totalPrice,
+                        newBooking.isApproved
+                ))
+            }else{
+                ResponseEntity(ResponseMessage("booking is not exist"), HttpStatus.BAD_REQUEST)
+            }
+        } else {
+            ResponseEntity(ResponseMessage("advertisement is not exist"), HttpStatus.BAD_REQUEST)
+        }
+
+    }
+
+
+    @GetMapping("sellerBookings/")
+    fun postBookingRequest(@RequestParam("advertId") advertId: Long, @RequestParam("date") date: Long?): ResponseEntity<*> {
+        val profile = authService.getUserRecord()
+        val seller = advertisementService.getSellerById(profile.id)
+        //val advertisement = seller?.let { advertisementService.getAdvertisementBySeller(it) }
+        //val booking = advertisement?.map { advertisementService.getBookings(it) }
+        val calendarDate = if (date != null) {
+            val calendar = Calendar.getInstance(Locale.getDefault())
+            calendar.timeInMillis = date
+            calendar
+        }else{
+            null
+        }
+        val booking = seller?.let  {
+            //advertisementService.getBookings(it.sellerId)
+            if(advertId==-1L){
+                advertisementService.getFilteredBookings(it.sellerId, null, calendarDate)
+            }else{
+                advertisementService.getFilteredBookings(it.sellerId, advertId, calendarDate)
+            }
+        }
+        return if (booking != null) {
+            val sellerBookingResponse = booking.map {
+                val visitorsGroup = advertisementService.getGroupByBooking(it)
+                var visitorsCount = 0
+                visitorsGroup.forEach { group ->
+                    visitorsCount += group.count
+                }
+                val date = it.date
+
+                SellerBookingResponse(
+                        it.id,
+                        it.eventTime.time.timeInMillis,
+                        it.advertisement.name,
+                        it.date.timeInMillis,
+                        it.totalPrice,
+                        it.isApproved,
+                        visitorsCount
+                )
+            }
+            ResponseEntity.ok(
+                    sellerBookingResponse
+            )
+        } else {
+            ResponseEntity(ResponseMessage("booking or seller is not exist"), HttpStatus.BAD_REQUEST)
+        }
+    }
+
+
+    @GetMapping("advertChips/")
+    fun getAdvertChipsRequest(): ResponseEntity<*> {
+        val profile = authService.getUserRecord()
+        val seller = advertisementService.getSellerById(profile.id)
+        val advertisement = seller?.let { advertisementService.getAdvertisementBySeller(it) }
+        return if (advertisement != null) {
+            val advertisementResponse = advertisement.map {
+                AdvertChip(it.name,it.id)
+            }
+            ResponseEntity.ok(
+                    advertisementResponse
+            )
+        } else {
+            ResponseEntity(ResponseMessage("advertisement is not exist"), HttpStatus.BAD_REQUEST)
+        }
+    }
+
+    @GetMapping("bookingInfo/")
+    fun getBookingInfoRequest(@RequestParam("bookingId") bookingId: Long): ResponseEntity<*> {
+        val profile = authService.getUserRecord()
+        val booking = advertisementService.getBookingById(bookingId)
+        val visitorsGroup = booking?.let { advertisementService.getGroupByBooking(it) }
+        return if (booking != null) {
+            val bookingInfoResponse = BookingInfoResponse(
+                    booking.id,
+                    booking.advertisement.id,
+                    booking.advertisement.name,
+                    booking.eventTime.time.timeInMillis,
+                    booking.date.timeInMillis,
+                    booking.bookingTime.timeInMillis,
+                    booking.isApproved,
+                    booking.user.id,
+                    booking.user.lastName+" "+booking.user.firstName,
+                    booking.totalPrice,
+                    visitorsGroup?.map {
+                        VisitorsGroupResponse(
+                                it.id,
+                                it.customerCategory.customerCategoryId,
+                                it.customerCategory.name,
+                                it.count
+                        )
+                    }?: listOf()
+            )
+            ResponseEntity.ok(bookingInfoResponse)
+        } else {
+            ResponseEntity(ResponseMessage("booking or seller is not exist"), HttpStatus.BAD_REQUEST)
+        }
+    }
+
+    @GetMapping("sellerAdverts/")
+    fun postAdvertsRequest(): ResponseEntity<*> {
+        val profile = authService.getUserRecord()
+        val seller = advertisementService.getSellerById(profile.id)
+        val advertisement = seller?.let { advertisementService.getAdvertisementBySeller(it) }
+
+        return if (advertisement != null) {
+            val sellerAdvertResponse = advertisement.map {
+
+                val ticketPrice =  advertisementService.getTicketPriceByAdvert(it.id).toList().sortedBy { ticketPrice -> ticketPrice.price }
+
+                SellerAdvertResponse(
+                        it.id,
+                        it.name,
+                        ticketPrice.firstOrNull()?.price?:0,
+                        it.visitorsCount
+                )
+            }
+            ResponseEntity.ok(
+                    sellerAdvertResponse
+            )
+        } else {
+            ResponseEntity(ResponseMessage("booking or seller is not exist"), HttpStatus.BAD_REQUEST)
         }
     }
 

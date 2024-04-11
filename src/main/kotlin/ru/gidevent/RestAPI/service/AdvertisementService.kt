@@ -272,6 +272,16 @@ class AdvertisementService {
         }
     }
 
+    fun reservedAdvertisements(id: Long): Iterable<AdvertisementMainInfo>{
+        val advertisementList = bookingRepository.getAdvertWithExtra(id)
+
+        val groupedList = advertisementList.groupBy { it.advertisement }
+
+        return groupedList.map { advertisement->
+            parseAdvertMainInfo(advertisement)
+        }
+    }
+
     fun allAdvertisements(id: Long): Iterable<AdvertisementMainInfo>{
         val advertisementList = advertisementRepository.getAdvertWithExtra(id)
 
@@ -357,6 +367,13 @@ class AdvertisementService {
         val groupedList = advertisementList.groupBy { it.advertisement }
 
         return parseAdvertMainInfo(groupedList.entries.first())
+
+    }
+
+    fun getAdvertisementBySeller(seller: Seller): List<Advertisement>{
+        val advertisementList = advertisementRepository.findBySeller(seller)
+
+        return advertisementList.toList()
 
     }
 
@@ -616,8 +633,18 @@ class AdvertisementService {
         }
     }
 
-    fun getBookings(): List<Booking>?{
-        val booking = bookingRepository.findAll()
+    fun getBookings(advertisement: Advertisement): List<Booking>?{
+        val booking = bookingRepository.findByAdvertisement(advertisement)
+        return booking.toList()
+    }
+
+    fun getBookings(id: Long): List<Booking>?{
+        val booking = bookingRepository.getBySeller(id)
+        return booking.toList()
+    }
+
+    fun getFilteredBookings(id: Long, advert: Long?, date: Calendar?): List<Booking>?{
+        val booking = bookingRepository.getBySellerAndAdvert(id, advert, date)
         return booking.toList()
     }
 
