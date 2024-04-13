@@ -62,8 +62,35 @@ class AdvertisementController {
 
     @GetMapping("advertisement/purchases")
     fun reservedAdvertisement(): ResponseEntity<*> {
-        val profile = authService.getUser()
-        return ResponseEntity.ok(advertisementService.reservedAdvertisements(profile.id))
+        val profile = authService.getUserRecord()
+
+        val booking = advertisementService.getBookings(profile.id)
+
+        return if (booking != null) {
+            val sellerBookingResponse = booking.map {
+                val visitorsGroup = advertisementService.getGroupByBooking(it)
+                var visitorsCount = 0
+                visitorsGroup.forEach { group ->
+                    visitorsCount += group.count
+                }
+                val date = it.date
+
+                SellerBookingResponse(
+                        it.id,
+                        it.eventTime.time.timeInMillis,
+                        it.advertisement.name,
+                        it.date.timeInMillis,
+                        it.totalPrice,
+                        it.isApproved,
+                        visitorsCount
+                )
+            }
+            ResponseEntity.ok(
+                    sellerBookingResponse
+            )
+        } else {
+            ResponseEntity(ResponseMessage("booking is not exist"), HttpStatus.BAD_REQUEST)
+        }
     }
 
     @GetMapping("auth/advertisement/{id}")

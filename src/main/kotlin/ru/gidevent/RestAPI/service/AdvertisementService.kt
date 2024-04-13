@@ -639,7 +639,7 @@ class AdvertisementService {
     }
 
     fun getBookings(id: Long): List<Booking>?{
-        val booking = bookingRepository.getBySeller(id)
+        val booking = bookingRepository.getByCustomer(id)
         return booking.toList()
     }
 
