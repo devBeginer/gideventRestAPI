@@ -26,7 +26,7 @@ interface BookingRepository: CrudRepository<Booking, Long> {
 
     @Query(
             "SELECT b FROM Booking b " +
-                    "WHERE b.advertisement.seller.sellerId = :id " +
+                    "WHERE b.advertisement.seller.user.id = :id " +
                     "AND (:advertId is null OR b.advertisement.id = :advertId) " +
                     "AND (:date is null OR b.date = :date)"
     )

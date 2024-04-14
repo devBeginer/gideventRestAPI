@@ -340,9 +340,9 @@ class AdvertisementService {
                 advertisement.key.city,
                 advertisement.key.favourite!=null,
                 AddInfoSeller(
-                        advertisement.key.seller.sellerId,
-                        advertisement.key.seller.firstName,
-                        advertisement.key.seller.lastName,
+                        advertisement.key.seller.user.id,
+                        advertisement.key.seller.user.firstName,
+                        advertisement.key.seller.user.lastName,
                         advertisement.key.seller.photo
                 ),
                 advertisement.value.map { ticketPriceDto ->
@@ -682,6 +682,10 @@ class AdvertisementService {
 
     fun getFeedbackById(id: FeedbackId): Feedback?{
         return feedbackRepository.findByIdOrNull(id)
+    }
+
+    fun getFeedbackByAdvertisement(advertisement: Advertisement): Iterable<Feedback>{
+        return feedbackRepository.findByFeedbackIdAdvertisement(advertisement)
     }
 
     fun saveFeedback(feedback: Feedback): Feedback {

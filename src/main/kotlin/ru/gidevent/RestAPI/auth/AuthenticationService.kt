@@ -74,9 +74,31 @@ class AuthenticationService(
     }
 
     fun signup(registerUserDto: RegisterUserDto): User {
-        val role = if (registerUserDto.roles == "ADMIN" ) Role.ADMIN else Role.USER
-        val user = User(login = registerUserDto.login, password = registerUserDto.password, firstName = registerUserDto.firstName, lastName = registerUserDto.lastName, roles = setOf(role))
+        val role = if (registerUserDto.roles == "ADMIN" ) {
+            setOf(Role.ADMIN, Role.USER)
+        } else if(registerUserDto.roles == "SELLER" ) {
+            setOf(Role.SELLER, Role.USER)
+        }else {
+            setOf(Role.USER)
+        }
+        val user = User(login = registerUserDto.login, password = registerUserDto.password, firstName = registerUserDto.firstName, lastName = registerUserDto.lastName, roles = role)
         return repository.save(user)
+    }
+
+    fun updateUser(id: Long, registerUserDto: RegisterUserDto): User? {
+        val role = if (registerUserDto.roles == "ADMIN" ) {
+            setOf(Role.ADMIN, Role.USER)
+        } else if(registerUserDto.roles == "SELLER" ) {
+            setOf(Role.SELLER, Role.USER)
+        }else {
+            setOf(Role.USER)
+        }
+        val user = User(login = registerUserDto.login, password = registerUserDto.password, firstName = registerUserDto.firstName, lastName = registerUserDto.lastName, roles = role)
+        return if(repository.existsById(id)){
+            repository.save(user)
+        }else{
+            null
+        }
     }
 
 
