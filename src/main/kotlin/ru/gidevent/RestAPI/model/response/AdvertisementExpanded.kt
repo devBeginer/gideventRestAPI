@@ -18,7 +18,7 @@ data class AdvertisementExpanded(
         val category: Category,
         val city: City,
         val favourite: Boolean?,
-        val seller: Seller,
+        val seller: SellerResponse,
         val priceList: List<TicketPriceResponse>?,
         val reviewsList: List<FeedbackResponse>?,
         val eventTimeList: List<EventTimeResponse>?

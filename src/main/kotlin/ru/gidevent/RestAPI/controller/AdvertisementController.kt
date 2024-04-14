@@ -111,6 +111,18 @@ class AdvertisementController {
         return ResponseEntity.ok(advertisementService.getExpandedAdvertisementById(id, profile))
     }
 
+    @GetMapping("edit/advertisement/{id}")
+    fun getAdvertisementForEdit(@PathVariable id: Long): ResponseEntity<*> {
+        val profile = authService.getUserRecord()
+        val seller = advertisementService.getSellerById(profile.id)
+        val advertisement = advertisementService.getAdvertisementById(id)
+        return if(seller!=null && advertisement!=null && advertisement.seller.sellerId == seller.sellerId){
+            ResponseEntity.ok(advertisement)
+        }else{
+            ResponseEntity(ResponseMessage("seller or advertisement is not exist"), HttpStatus.BAD_REQUEST)
+        }
+    }
+
     @GetMapping("auth/category/")
     fun category(): ResponseEntity<*> {
         return ResponseEntity.ok(advertisementService.allCategory())
@@ -159,6 +171,19 @@ class AdvertisementController {
     @GetMapping("auth/feedback/")
     fun feedback(): ResponseEntity<*> {
         return ResponseEntity.ok(advertisementService.allFeedback())
+    }
+
+    @GetMapping("feedback/")
+    fun feedback(@RequestParam("advertisementId") advertisementId: Long): ResponseEntity<*> {
+        val profile = authService.getUserRecord()
+        val advertisement = advertisementService.getAdvertisementById(advertisementId)
+        val feedback = advertisement?.let { advertisementService.getFeedbackById(FeedbackId(profile, it)) }
+        return if(feedback!=null){
+            ResponseEntity.ok(feedback)
+        }else{
+            ResponseEntity(ResponseMessage("advertisement or feedback is not exist"), HttpStatus.BAD_REQUEST)
+        }
+
     }
 
 
@@ -264,6 +289,51 @@ class AdvertisementController {
                 )
             )
             ResponseEntity.ok(newAdvertisement)
+        } else {
+            ResponseEntity(ResponseMessage("transportation or category or city or seller is not exist"), HttpStatus.BAD_REQUEST)
+        }
+    }
+
+
+    //@PreAuthorize("hasAuthority('ADMIN')")
+    @DeleteMapping("advertisement/")
+    fun deleteAdvertisement(@RequestParam("advertisementId") advertisementId: Long): ResponseEntity<*> {
+        val profile = authService.getUserRecord()
+        val seller = advertisementService.getSellerById(profile.id)
+        val advertisement = advertisementService.getAdvertisementById(advertisementId)
+
+        return if (advertisement != null && seller!=null && seller.sellerId==advertisement.seller.sellerId) {
+            ResponseEntity.ok(advertisementService.deleteAdvertisement(advertisementId))
+        } else {
+            ResponseEntity(ResponseMessage("transportation or category or city or seller is not exist"), HttpStatus.BAD_REQUEST)
+        }
+    }
+
+
+    //@PreAuthorize("hasAuthority('ADMIN')")
+    @DeleteMapping("eventTime/")
+    fun deleteEventTime(@RequestParam("eventTimeId") eventTimeId: Long): ResponseEntity<*> {
+        val profile = authService.getUserRecord()
+        val seller = advertisementService.getSellerById(profile.id)
+        val eventTime = advertisementService.getEventTimeById(eventTimeId)
+
+        return if (eventTime != null && seller!=null && seller.sellerId==eventTime.advertisement.seller.sellerId) {
+            ResponseEntity.ok(advertisementService.deleteEventTime(eventTimeId))
+        } else {
+            ResponseEntity(ResponseMessage("transportation or category or city or seller is not exist"), HttpStatus.BAD_REQUEST)
+        }
+    }
+
+
+    //@PreAuthorize("hasAuthority('ADMIN')")
+    @DeleteMapping("ticketPrice/")
+    fun deleteTicketPrice(@RequestParam("ticketPriceId") ticketPriceId: Long): ResponseEntity<*> {
+        val profile = authService.getUserRecord()
+        val seller = advertisementService.getSellerById(profile.id)
+        val ticketPrice = advertisementService.getTicketPriceById(ticketPriceId)
+
+        return if (ticketPrice != null && seller!=null && seller.sellerId==ticketPrice.advertisement.seller.sellerId) {
+            ResponseEntity.ok(advertisementService.deleteTicketPrice(ticketPriceId))
         } else {
             ResponseEntity(ResponseMessage("transportation or category or city or seller is not exist"), HttpStatus.BAD_REQUEST)
         }

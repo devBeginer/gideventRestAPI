@@ -11,7 +11,7 @@ data class EventTime(
         @GeneratedValue(strategy = GenerationType.AUTO)
         @Column(name = "time_id")
         val timeId: Long,
-        @ManyToOne(targetEntity = Advertisement::class,  fetch= FetchType.LAZY/*EAGER*/, cascade = [CascadeType.ALL])
+        @ManyToOne(targetEntity = Advertisement::class,  fetch= FetchType.LAZY/*EAGER, cascade = [CascadeType.ALL]*/)
         @JoinColumn(referencedColumnName = "advertisement_id",/*name = "advertisement_id", insertable = false, updatable = false*/)
         //@OnDelete(action = OnDeleteAction.CASCADE)
         val advertisement: Advertisement,

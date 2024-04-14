@@ -397,7 +397,13 @@ class AdvertisementService {
                     it.category,
                     it.city,
                     null,
-                    it.seller,
+                    SellerResponse(
+                            it.seller.sellerId,
+                            it.seller.user.firstName,
+                            it.seller.user.lastName,
+                            it.seller.photo,
+                            it.seller.about
+                    ),
                     ticketPrice?.map { ticketPriceDto ->
                         TicketPriceResponse(
                                 ticketPriceDto.priceId,
@@ -449,7 +455,13 @@ class AdvertisementService {
                 it.category,
                 it.city,
                 favourite!=null,
-                it.seller,
+                SellerResponse(
+                        it.seller.sellerId,
+                        it.seller.user.firstName,
+                        it.seller.user.lastName,
+                        it.seller.photo,
+                        it.seller.about
+                ),
                 ticketPrice?.map { ticketPriceDto ->
                     TicketPriceResponse(
                             ticketPriceDto.priceId,
@@ -710,6 +722,33 @@ class AdvertisementService {
 
     fun deleteFavourite(favourite: Favourite) {
         return favouriteRepository.delete(favourite)
+    }
+
+    fun deleteAdvertisement(advertisementId: Long): Boolean {
+        return if(advertisementRepository.existsById(advertisementId)){
+            advertisementRepository.deleteById(advertisementId)
+            true
+        }else{
+            false
+        }
+    }
+
+    fun deleteEventTime(eventTimeId: Long): Boolean {
+        return if(eventTimeRepository.existsById(eventTimeId)){
+            eventTimeRepository.deleteById(eventTimeId)
+            true
+        }else{
+            false
+        }
+    }
+
+    fun deleteTicketPrice(ticketPriceId: Long): Boolean {
+        return if(ticketPriceRepository.existsById(ticketPriceId)){
+            ticketPriceRepository.deleteById(ticketPriceId)
+            true
+        }else{
+            false
+        }
     }
 
     fun allSeller(): Iterable<Seller>{

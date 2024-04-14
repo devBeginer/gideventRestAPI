@@ -15,10 +15,10 @@ data class Feedback(
 
 @Embeddable
 data class FeedbackId(
-        @ManyToOne(targetEntity = User::class,  fetch= FetchType.LAZY/*EAGER*/, cascade = [CascadeType.ALL])
+        @ManyToOne(targetEntity = User::class,  fetch= FetchType.LAZY/*EAGER, cascade = [CascadeType.ALL]*/)
         @JoinColumn(referencedColumnName = "user_id", insertable = false,/*name = "user_id", updatable = false*/)
         val user: User,
-        @ManyToOne(targetEntity = Advertisement::class,  fetch= FetchType.LAZY/*EAGER*/, cascade = [CascadeType.ALL])
+        @ManyToOne(targetEntity = Advertisement::class,  fetch= FetchType.LAZY/*EAGER, cascade = [CascadeType.ALL]*/)
         @JoinColumn(referencedColumnName = "advertisement_id", insertable = false,/*name = "advertisement_id", updatable = false*/)
         val advertisement: Advertisement
 ): Serializable {

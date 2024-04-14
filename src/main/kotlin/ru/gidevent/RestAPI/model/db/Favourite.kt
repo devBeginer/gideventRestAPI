@@ -13,10 +13,10 @@ data class Favourite(
 
 @Embeddable
 data class FavouriteId(
-        @ManyToOne(targetEntity = User::class,  fetch= FetchType.LAZY/*EAGER*/, cascade = [CascadeType.ALL])
+        @ManyToOne(targetEntity = User::class,  fetch= FetchType.LAZY/*EAGER, cascade = [CascadeType.ALL]*/)
         @JoinColumn(referencedColumnName = "user_id",/*name = "user_id", insertable = false, updatable = false*/)
         val userId: User,
-        @ManyToOne(targetEntity = Advertisement::class,  fetch= FetchType.LAZY/*EAGER*/, cascade = [CascadeType.ALL])
+        @ManyToOne(targetEntity = Advertisement::class,  fetch= FetchType.LAZY/*EAGER, cascade = [CascadeType.ALL]*/)
         @JoinColumn(referencedColumnName = "advertisement_id",/*name = "advertisement_id", insertable = false, updatable = false*/)
         val advertisementId: Advertisement
 ): Serializable {
