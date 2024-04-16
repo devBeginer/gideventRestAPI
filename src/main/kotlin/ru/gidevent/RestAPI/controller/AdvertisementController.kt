@@ -9,9 +9,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
-import ru.gidevent.RestAPI.auth.AuthenticationService
-import ru.gidevent.RestAPI.auth.RegisterUserDto
-import ru.gidevent.RestAPI.auth.User
+import ru.gidevent.RestAPI.auth.*
 import ru.gidevent.RestAPI.model.db.*
 import ru.gidevent.RestAPI.model.request.*
 import ru.gidevent.RestAPI.model.response.*
@@ -498,6 +496,51 @@ class AdvertisementController {
 
     }
 
+    @GetMapping("profile")
+    fun getProfile(): ResponseEntity<UserDetailsResponse> {
+        val profileResponse = authService.getUserDetails()
+        val seller = advertisementService.getSellerById(profileResponse.id)
+        val bookings = advertisementService.getBookings(profileResponse.id)?: listOf()
+        val today = Calendar.getInstance(Locale.getDefault())
+        today.set(Calendar.MILLISECOND, 0)
+        today.set(Calendar.SECOND, 0)
+        today.set(Calendar.HOUR_OF_DAY, 0)
+        today.set(Calendar.MINUTE, 0)
+        val todayBookings = bookings.filter { it.date == today }
+        var adverts = 0
+        var orders = 0
+        if(seller!=null){
+            adverts = advertisementService.getAdvertisementBySeller(seller).size
+            orders = advertisementService.getBookingsBySeller(seller.sellerId)?.size ?: 0
+        }
+        return ResponseEntity.ok(UserDetailsResponse(profileResponse.id, profileResponse.photo, profileResponse.firstName, profileResponse.lastName, bookings.size, todayBookings.size, adverts, orders, profileResponse.roles))
+    }
+
+    @GetMapping("sellerInfo")
+    fun getSeller(): ResponseEntity<*> {
+        val profileResponse = authService.getUser()
+        val user = authService.getUserDetails()
+        val seller = advertisementService.getSellerById(profileResponse.id)
+
+
+        return if (seller != null) {
+            val adverts = advertisementService.getAdvertisementBySeller(seller)
+            var feedbackCount = 0
+            var totalScore = 0
+            adverts.forEach { advertisement ->
+                val feedbacks = advertisementService.getFeedbackByAdvertisement(advertisement).toList()
+                feedbacks.forEach {
+                    totalScore += it.rating
+                }
+                feedbackCount += feedbacks.size
+            }
+
+            ResponseEntity.ok(SellerInfo(seller.sellerId, seller.user.photo, seller.user.firstName, seller.user.lastName, seller.about, adverts.size, feedbackCount, totalScore/(feedbackCount.toFloat())))
+        } else {
+            ResponseEntity(ResponseMessage("seller is not exist"), HttpStatus.BAD_REQUEST)
+        }
+    }
+
 
     //@PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("seller/")
@@ -507,12 +550,12 @@ class AdvertisementController {
                 sellerRequest.password,
                 sellerRequest.firstName,
                 sellerRequest.lastName,
+                sellerRequest.photo,
                 "SELLER"
         ))
 
         val newSeller = advertisementService.saveSeller(Seller(registeredUser.id,
                 user = registeredUser,
-                photo = sellerRequest.photo,
                 about = sellerRequest.about
         ))
         return ResponseEntity.ok(newSeller)
@@ -528,12 +571,12 @@ class AdvertisementController {
                 sellerRequest.password,
                 sellerRequest.firstName,
                 sellerRequest.lastName,
+                sellerRequest.photo,
                 "SELLER"
         ))
 
         val newSeller = advertisementService.saveSeller(Seller(registeredUser.id,
                 user = registeredUser,
-                photo = sellerRequest.photo,
                 about = sellerRequest.about
         ))
         return ResponseEntity.ok(newSeller)
@@ -549,13 +592,13 @@ class AdvertisementController {
                 sellerRequest.password,
                 sellerRequest.firstName,
                 sellerRequest.lastName,
+                sellerRequest.photo,
                 "SELLER"
         ))
 
         val newSeller = registeredUser?.let {
             advertisementService.updateSeller(it.id, Seller(it.id,
                 user = it,
-                photo = sellerRequest.photo,
                 about = sellerRequest.about
         ))
         }

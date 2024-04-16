@@ -14,6 +14,7 @@ data class User(
         private val password: String,
         val firstName: String,
         val lastName: String,
+        val photo: String,
         val roles: Set<Role>
 ): UserDetails {
     override fun getAuthorities(): Set<Role> {

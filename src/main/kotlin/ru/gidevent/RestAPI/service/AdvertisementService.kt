@@ -343,7 +343,7 @@ class AdvertisementService {
                         advertisement.key.seller.user.id,
                         advertisement.key.seller.user.firstName,
                         advertisement.key.seller.user.lastName,
-                        advertisement.key.seller.photo
+                        advertisement.key.seller.user.photo
                 ),
                 advertisement.value.map { ticketPriceDto ->
                     TicketPriceResponse(
@@ -401,7 +401,7 @@ class AdvertisementService {
                             it.seller.sellerId,
                             it.seller.user.firstName,
                             it.seller.user.lastName,
-                            it.seller.photo,
+                            it.seller.user.photo,
                             it.seller.about
                     ),
                     ticketPrice?.map { ticketPriceDto ->
@@ -459,7 +459,7 @@ class AdvertisementService {
                         it.seller.sellerId,
                         it.seller.user.firstName,
                         it.seller.user.lastName,
-                        it.seller.photo,
+                        it.seller.user.photo,
                         it.seller.about
                 ),
                 ticketPrice?.map { ticketPriceDto ->
@@ -652,6 +652,11 @@ class AdvertisementService {
 
     fun getBookings(id: Long): List<Booking>?{
         val booking = bookingRepository.getByCustomer(id)
+        return booking.toList()
+    }
+
+    fun getBookingsBySeller(id: Long): List<Booking>?{
+        val booking = bookingRepository.getBySeller(id)
         return booking.toList()
     }
 

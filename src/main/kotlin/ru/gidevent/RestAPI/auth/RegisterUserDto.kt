@@ -5,5 +5,6 @@ data class RegisterUserDto(
         val password: String,
         val firstName: String,
         val lastName: String,
+        val photo: String = "",
         val roles: String
 )

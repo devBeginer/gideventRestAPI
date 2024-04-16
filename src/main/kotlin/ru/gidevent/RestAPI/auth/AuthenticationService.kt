@@ -81,7 +81,7 @@ class AuthenticationService(
         }else {
             setOf(Role.USER)
         }
-        val user = User(login = registerUserDto.login, password = registerUserDto.password, firstName = registerUserDto.firstName, lastName = registerUserDto.lastName, roles = role)
+        val user = User(login = registerUserDto.login, password = registerUserDto.password, firstName = registerUserDto.firstName, lastName = registerUserDto.lastName, photo = registerUserDto.photo, roles = role)
         return repository.save(user)
     }
 
@@ -93,7 +93,7 @@ class AuthenticationService(
         }else {
             setOf(Role.USER)
         }
-        val user = User(login = registerUserDto.login, password = registerUserDto.password, firstName = registerUserDto.firstName, lastName = registerUserDto.lastName, roles = role)
+        val user = User(login = registerUserDto.login, password = registerUserDto.password, firstName = registerUserDto.firstName, lastName = registerUserDto.lastName, photo = registerUserDto.photo, roles = role)
         return if(repository.existsById(id)){
             repository.save(user)
         }else{
@@ -106,10 +106,24 @@ class AuthenticationService(
         val authentication = SecurityContextHolder.getContext().authentication as JwtAuthentication
 
         if (authentication.isAuthenticated) {
-            val user = authentication.username?.let { repository.findByLogin(it) }
+            val user = authentication.username?.let { repository.findByLogin(it) }?.get()
 
             if (user != null) {
-                return ProfileResponse(user.get().id, user.get().login, user.get().firstName, user.get().lastName, user.get().roles)
+                return ProfileResponse(user.id, user.login, user.firstName, user.lastName, user.roles)
+            }
+        }
+        throw AuthException("Невалидный JWT токен")
+    }
+
+
+    fun getUserDetails(): User {
+        val authentication = SecurityContextHolder.getContext().authentication as JwtAuthentication
+
+        if (authentication.isAuthenticated) {
+            val user = authentication.username?.let { repository.findByLogin(it) }?.get()
+
+            if (user != null) {
+                return user
             }
         }
         throw AuthException("Невалидный JWT токен")

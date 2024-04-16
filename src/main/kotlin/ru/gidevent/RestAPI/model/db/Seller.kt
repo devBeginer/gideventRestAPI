@@ -15,7 +15,6 @@ data class Seller(
         //@JoinColumn(referencedColumnName = "user_id")
         @PrimaryKeyJoinColumn(name="seller_id", referencedColumnName="user_id")
         val user: User,
-        val photo: String,
         val about: String
 )
 
