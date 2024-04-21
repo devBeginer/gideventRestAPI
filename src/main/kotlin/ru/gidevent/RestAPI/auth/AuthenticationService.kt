@@ -93,7 +93,7 @@ class AuthenticationService(
         }else {
             setOf(Role.USER)
         }
-        val user = User(login = registerUserDto.login, password = registerUserDto.password, firstName = registerUserDto.firstName, lastName = registerUserDto.lastName, photo = registerUserDto.photo, roles = role)
+        val user = User(id, login = registerUserDto.login, password = registerUserDto.password, firstName = registerUserDto.firstName, lastName = registerUserDto.lastName, photo = registerUserDto.photo, roles = role)
         return if(repository.existsById(id)){
             repository.save(user)
         }else{

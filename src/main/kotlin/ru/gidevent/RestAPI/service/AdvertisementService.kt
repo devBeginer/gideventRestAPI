@@ -473,7 +473,7 @@ class AdvertisementService {
                 feedback?.map { feedback ->
                     FeedbackResponse(
                             "${feedback.feedbackId.user.lastName} ${feedback.feedbackId.user.firstName}",
-                            "",//feedback.feedbackId.userId.photo,
+                            feedback.feedbackId.user.photo,
                             feedback.rating,
                             feedback.text
                     )

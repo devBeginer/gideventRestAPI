@@ -516,11 +516,11 @@ class AdvertisementController {
         return ResponseEntity.ok(UserDetailsResponse(profileResponse.id, profileResponse.photo, profileResponse.firstName, profileResponse.lastName, bookings.size, todayBookings.size, adverts, orders, profileResponse.roles))
     }
 
-    @GetMapping("sellerInfo")
-    fun getSeller(): ResponseEntity<*> {
-        val profileResponse = authService.getUser()
-        val user = authService.getUserDetails()
-        val seller = advertisementService.getSellerById(profileResponse.id)
+    @GetMapping("auth/sellerInfo")
+    fun getSeller(@RequestParam("sellerId") sellerId: Long): ResponseEntity<*> {
+        //val profileResponse = authService.getUser()
+        //val user = authService.getUserDetails()
+        val seller = advertisementService.getSellerById(sellerId)
 
 
         return if (seller != null) {
@@ -534,10 +534,59 @@ class AdvertisementController {
                 }
                 feedbackCount += feedbacks.size
             }
+            val averageRating = if(feedbackCount>0) totalScore/(feedbackCount.toFloat()) else 0F
 
-            ResponseEntity.ok(SellerInfo(seller.sellerId, seller.user.photo, seller.user.firstName, seller.user.lastName, seller.about, adverts.size, feedbackCount, totalScore/(feedbackCount.toFloat())))
+            ResponseEntity.ok(SellerInfo(seller.sellerId, seller.user.photo, seller.user.firstName, seller.user.lastName, seller.about, adverts.size, feedbackCount, averageRating))
         } else {
             ResponseEntity(ResponseMessage("seller is not exist"), HttpStatus.BAD_REQUEST)
+        }
+    }
+
+    @GetMapping("editProfile")
+    fun getEditProfile(): ResponseEntity<*> {
+        val profileResponse = authService.getUserDetails()
+        val seller = advertisementService.getSellerById(profileResponse.id)
+        return ResponseEntity.ok(EditProfile(
+                profileResponse.id,
+                profileResponse.photo,
+                profileResponse.firstName,
+                profileResponse.lastName,
+                seller?.about?:"",
+                profileResponse.login,
+                "",
+                profileResponse.roles
+        ))
+    }
+
+    @PutMapping("profile")
+    fun getProfile(@RequestBody editProfile: EditProfile): ResponseEntity<*> {
+        val profileResponse = authService.getUser()
+        val registeredUser = authService.updateUser(profileResponse.id, RegisterUserDto(
+                editProfile.login,
+                editProfile.password,
+                editProfile.firstName,
+                editProfile.lastName,
+                editProfile.photo,
+                if (editProfile.roles.contains(Role.ADMIN)) "ADMIN" else if (editProfile.roles.contains(Role.SELLER)) "SELLER" else "USER"
+        ))
+
+        val newSeller = registeredUser?.let {
+            advertisementService.updateSeller(it.id, Seller(it.id,
+                    user = it,
+                    about = editProfile.about
+            ))
+        }
+
+        return if (registeredUser != null){
+            ResponseEntity.ok(ProfileResponse(
+                    registeredUser.id,
+                    registeredUser.login,
+                    registeredUser.firstName,
+                    registeredUser.lastName,
+                    registeredUser.roles
+            ))
+        } else {
+            ResponseEntity(ResponseMessage("user is not exist"), HttpStatus.BAD_REQUEST)
         }
     }
 

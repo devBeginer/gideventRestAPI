@@ -25,20 +25,6 @@ class AuthenticationController {
         return ResponseEntity.ok(("Hello admin " + authInfo.firstName) + "!")
     }
 
-    @GetMapping("editProfile")
-    fun getProfile(): ResponseEntity<ProfileResponse> {
-        val profileResponse = authService.getUser()
-
-        return ResponseEntity.ok(profileResponse)
-    }
-
-    @PutMapping("editProfile")
-    fun getProfile(): ResponseEntity<ProfileResponse> {
-        val profileResponse = authService.getUser()
-
-        return ResponseEntity.ok(profileResponse)
-    }
-
     @PostMapping("auth/login")
     fun login(@RequestBody authRequest: JwtUserRequest): ResponseEntity<JwtUserResponse> {
         val token: JwtUserResponse = authService.login(authRequest)
