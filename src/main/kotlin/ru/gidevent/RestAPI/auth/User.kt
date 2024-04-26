@@ -16,7 +16,9 @@ data class User(
         val firstName: String,
         val lastName: String,
         val photo: String,
-        val roles: Set<Role>
+        val roles: Set<Role>,
+        val vkId: String = "",
+        val isVerified: Boolean = false
 ): UserDetails {
     override fun getAuthorities(): Set<Role> {
         return roles

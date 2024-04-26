@@ -377,6 +377,13 @@ class AdvertisementService {
 
     }
 
+    fun getAdvertisementByStatus(status: String): List<Advertisement>{
+        val advertisementList = advertisementRepository.findByStatus(status)
+
+        return advertisementList.toList()
+
+    }
+
     fun getExpandedAdvertisementById(id: Long): AdvertisementExpanded?{
         val advertisement = advertisementRepository.findByIdOrNull(id)
         val ticketPrice = advertisement?.let { ticketPriceRepository.getTicketPriceByAdvert(it.id) }
@@ -750,6 +757,33 @@ class AdvertisementService {
     fun deleteTicketPrice(ticketPriceId: Long): Boolean {
         return if(ticketPriceRepository.existsById(ticketPriceId)){
             ticketPriceRepository.deleteById(ticketPriceId)
+            true
+        }else{
+            false
+        }
+    }
+
+    fun deleteCategory(id: Long): Boolean {
+        return if(categoryRepository.existsById(id)){
+            categoryRepository.deleteById(id)
+            true
+        }else{
+            false
+        }
+    }
+
+    fun deleteCustomerCategory(id: Long): Boolean {
+        return if(customerCategoryRepository.existsById(id)){
+            customerCategoryRepository.deleteById(id)
+            true
+        }else{
+            false
+        }
+    }
+
+    fun deleteTransport(id: Long): Boolean {
+        return if(transportationVariantRepository.existsById(id)){
+            transportationVariantRepository.deleteById(id)
             true
         }else{
             false

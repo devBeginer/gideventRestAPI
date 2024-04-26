@@ -31,6 +31,7 @@ interface AdvertisementRepository : CrudRepository<Advertisement, Long> {
     // найти первые 5 по FirstName начинающихся с символов и сортировать по FirstName
     //fun findFirst5ByFirstNameStartsWithOrderByFirstName(firstNameStartsWith: String?): List<Employees?>?
 
+    fun findByStatus(status: String): List<Advertisement>
     fun findBySeller(seller: Seller): List<Advertisement>
 
     @Query(
@@ -54,6 +55,7 @@ interface AdvertisementRepository : CrudRepository<Advertisement, Long> {
                     "FROM Advertisement a " +
                     "LEFT JOIN FETCH Favourite f on f.favouriteId.advertisementId = a " + /*WHERE f.favouriteId.userId = :id*/
                     "INNER JOIN FETCH TicketPrice tp on tp.advertisement = a " +
+                    "WHERE a.status = 'ACCEPTED' " +
                     //"INNER JOIN TRANSPORT ON ADVERTISEMENT.transportation_id = TRANSPORT.transportation_id " +
                     //"INNER JOIN TRANSPORT ON ADVERTISEMENT.category_id = CATEGORY.category_id " +
                     //"INNER JOIN TRANSPORT ON ADVERTISEMENT.city_id = CITY.city_id " +
@@ -70,6 +72,7 @@ interface AdvertisementRepository : CrudRepository<Advertisement, Long> {
                     "FROM Advertisement a " +
                     "LEFT JOIN FETCH Favourite f on f.favouriteId.advertisementId = a AND f.favouriteId.userId.id = :id " +
                     "INNER JOIN FETCH TicketPrice tp on tp.advertisement = a " +
+                    "WHERE a.status = 'ACCEPTED' " +
                     "ORDER BY a.rating DESC"
     )
     fun getAdvertWithExtra(id: Long): Iterable<TicketPriceDto>
@@ -97,7 +100,7 @@ interface AdvertisementRepository : CrudRepository<Advertisement, Long> {
                     "FROM Advertisement a " +
                     "LEFT JOIN FETCH Favourite f on f.favouriteId.advertisementId = a AND f.favouriteId.userId.id = :id " +
                     "INNER JOIN FETCH TicketPrice tp on tp.advertisement = a " +
-                    "WHERE a.name LIKE '%' || :query || '%' " +
+                    "WHERE a.name LIKE '%' || :query || '%' AND a.status = 'ACCEPTED' " +
                     "ORDER BY a.rating DESC"
     )
     fun getAdvertWithExtraByName(id: Long, query: String): Iterable<TicketPriceDto>
@@ -111,14 +114,14 @@ interface AdvertisementRepository : CrudRepository<Advertisement, Long> {
                     "FROM Advertisement a " +
                     "LEFT JOIN FETCH Favourite f on f.favouriteId.advertisementId = a " +
                     "INNER JOIN FETCH TicketPrice tp on tp.advertisement = a " +
-                    "WHERE a.name LIKE '%' || :query || '%' " +
+                    "WHERE a.name LIKE '%' || :query || '%' AND a.status = 'ACCEPTED' " +
                     "ORDER BY a.rating DESC"
     )
     fun getAdvertWithExtraByName(query: String): Iterable<TicketPriceDto>
 
     @Query(
             "SELECT new ru.gidevent.RestAPI.model.dto.AdvertSuggestion(a.id, a.name, a.city.name) " +
-                    "FROM Advertisement a WHERE a.name LIKE '%' || :query || '%' " +
+                    "FROM Advertisement a WHERE a.name LIKE '%' || :query || '%' AND a.status = 'ACCEPTED' " +
                     "ORDER BY a.rating DESC " +
                     "LIMIT 15"
     )
@@ -154,6 +157,7 @@ interface AdvertisementRepository : CrudRepository<Advertisement, Long> {
                     "AND (:transport is null OR a.transportation.transportationId in :transport) " +
                     "AND (:categories is null OR a.category.categoryId in :categories) " +
                     "AND (:city is null OR a.city.cityId = :city) " +
+                    "AND a.status = 'ACCEPTED' " +
                     "ORDER BY a.rating DESC"
     )
     fun getAdvertWithExtraByParams(
@@ -208,6 +212,7 @@ interface AdvertisementRepository : CrudRepository<Advertisement, Long> {
                     "AND (:transport is null OR a.transportation.transportationId in :transport) " +
                     "AND (:categories is null OR a.category.categoryId in :categories) " +
                     "AND (:city is null OR a.city.cityId = :city) " +
+                    "AND a.status = 'ACCEPTED' " +
                     "ORDER BY a.rating DESC"
     )
     fun getAdvertWithExtraByParams(

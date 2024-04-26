@@ -28,7 +28,8 @@ data class Advertisement(
         val city: City,
         @ManyToOne(targetEntity = Seller::class,  fetch= FetchType.LAZY/*EAGER*/)
         @JoinColumn(referencedColumnName = "seller_id",/*name = "seller_id", insertable = false, updatable = false*/)
-        val seller: Seller/*,
+        val seller: Seller,/*,
         @OneToMany(mappedBy = "advertisement", cascade = [CascadeType.ALL], orphanRemoval = true)
         val  priceList: MutableList<TicketPrice>*/
+        val status: String
 )

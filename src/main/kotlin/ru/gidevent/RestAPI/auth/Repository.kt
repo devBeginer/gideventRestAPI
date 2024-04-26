@@ -10,4 +10,5 @@ interface Repository: CrudRepository<User, Long> {
     //fun getUserByLogin(@Param("login") login: String): User?
     fun getUserByLogin(@Param("login") login: String): Optional<User>*/
     fun findByLogin(login: String): Optional<User>
+    fun findByVkId(vkId: String): Optional<User>
 }

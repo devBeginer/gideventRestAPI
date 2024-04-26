@@ -6,5 +6,6 @@ data class RegisterUserDto(
         val firstName: String,
         val lastName: String,
         val photo: String = "",
-        val roles: String
+        val roles: String,
+        val isVerified: Boolean = false
 )

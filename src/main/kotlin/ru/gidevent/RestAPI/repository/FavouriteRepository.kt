@@ -21,6 +21,7 @@ interface FavouriteRepository: CrudRepository<Favourite, FavouriteId> {
                     "FROM Advertisement a " +
                     "INNER JOIN FETCH Favourite f on f.favouriteId.advertisementId = a AND f.favouriteId.userId.id = :id " +
                     "INNER JOIN FETCH TicketPrice tp on tp.advertisement = a " +
+                    "WHERE a.status = 'ACCEPTED' " +
                     "ORDER BY a.rating DESC"
     )
     fun getAdvertWithExtra(id: Long): Iterable<TicketPriceDto>
