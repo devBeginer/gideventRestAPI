@@ -5,5 +5,6 @@ class SellerResponse(
         val firstName: String,
         val lastName: String,
         val photo: String,
-        val about: String
+        val about: String,
+        val isVerified: Boolean
 )

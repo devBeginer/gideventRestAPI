@@ -9,5 +9,6 @@ data class EditProfile(
     val about: String,
     val login: String,
     val password: String,
-    val roles: Set<Role>
+    val roles: Set<Role>,
+    val vkUser: Boolean
 )

@@ -74,15 +74,29 @@ class AuthenticationService(
     }
 
     fun signup(registerUserDto: RegisterUserDto): User {
-        val role = if (registerUserDto.roles == "ADMIN" ) {
+        val role = if (registerUserDto.roles == "ADMIN") {
             setOf(Role.ADMIN, Role.USER)
-        } else if(registerUserDto.roles == "SELLER" ) {
+        } else if (registerUserDto.roles == "SELLER") {
             setOf(Role.SELLER, Role.USER)
-        }else {
+        } else {
             setOf(Role.USER)
         }
-        val user = User(login = registerUserDto.login, password = registerUserDto.password, firstName = registerUserDto.firstName, lastName = registerUserDto.lastName, photo = registerUserDto.photo, roles = role)
-        return repository.save(user)
+        val existingUser = repository.findByLogin(registerUserDto.login)
+        return if (!existingUser.isPresent) {
+            val user = User(
+                    login = registerUserDto.login,
+                    password = registerUserDto.password,
+                    firstName = registerUserDto.firstName,
+                    lastName = registerUserDto.lastName,
+                    photo = registerUserDto.photo,
+                    roles = role,
+                    vkId = registerUserDto.vkId,
+                    isVerified = registerUserDto.isVerified
+            )
+            repository.save(user)
+        } else {
+            throw AuthException("Пользователь уже зарегистрирован")
+        }
     }
 
     fun updateUser(id: Long, registerUserDto: RegisterUserDto): User? {
@@ -93,7 +107,15 @@ class AuthenticationService(
         }else {
             setOf(Role.USER)
         }
-        val user = User(id, login = registerUserDto.login, password = registerUserDto.password, firstName = registerUserDto.firstName, lastName = registerUserDto.lastName, photo = registerUserDto.photo, roles = role)
+        val user = User(id,
+                login = registerUserDto.login,
+                password = registerUserDto.password,
+                firstName = registerUserDto.firstName,
+                lastName = registerUserDto.lastName,
+                photo = registerUserDto.photo,
+                roles = role,
+                vkId = registerUserDto.vkId,
+                isVerified = registerUserDto.isVerified)
         return if(repository.existsById(id)){
             repository.save(user)
         }else{
@@ -141,5 +163,22 @@ class AuthenticationService(
             }
         }
         throw AuthException("Невалидный JWT токен")
+    }
+
+
+    fun isExistByVkId(vkId: Long): Boolean {
+        return repository.findByVkId(vkId).isPresent
+    }
+
+
+    fun loginFromVk(vkId: Long): JwtUserResponse {
+        val user: User = repository.findByVkId(vkId)
+                .orElseThrow { AuthException("Пользователь не найден") }
+
+        val accessToken: String = jwtProvider.generateAccessToken(user)
+        val refreshToken: String = jwtProvider.generateRefreshToken(user)
+        refreshStorage[user.login] = refreshToken
+        return JwtUserResponse(accessToken = accessToken, refreshToken = refreshToken)
+
     }
 }

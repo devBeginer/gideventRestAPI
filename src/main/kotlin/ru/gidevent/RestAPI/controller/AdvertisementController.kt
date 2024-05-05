@@ -571,7 +571,7 @@ class AdvertisementController {
             }
             val averageRating = if(feedbackCount>0) totalScore/(feedbackCount.toFloat()) else 0F
 
-            ResponseEntity.ok(SellerInfo(seller.sellerId, seller.user.photo, seller.user.firstName, seller.user.lastName, seller.about, adverts.size, feedbackCount, averageRating))
+            ResponseEntity.ok(SellerInfo(seller.sellerId, seller.user.photo, seller.user.firstName, seller.user.lastName, seller.about, adverts.size, feedbackCount, averageRating, seller.user.isVerified))
         } else {
             ResponseEntity(ResponseMessage("seller is not exist"), HttpStatus.BAD_REQUEST)
         }
@@ -589,20 +589,23 @@ class AdvertisementController {
                 seller?.about?:"",
                 profileResponse.login,
                 "",
-                profileResponse.roles
+                profileResponse.roles,
+                profileResponse.vkId!=-1L
         ))
     }
 
     @PutMapping("profile")
     fun getProfile(@RequestBody editProfile: EditProfile): ResponseEntity<*> {
-        val profileResponse = authService.getUser()
+        val profileResponse = authService.getUserRecord()
         val registeredUser = authService.updateUser(profileResponse.id, RegisterUserDto(
                 editProfile.login,
                 editProfile.password,
                 editProfile.firstName,
                 editProfile.lastName,
                 editProfile.photo,
-                if (editProfile.roles.contains(Role.ADMIN)) "ADMIN" else if (editProfile.roles.contains(Role.SELLER)) "SELLER" else "USER"
+                if (editProfile.roles.contains(Role.ADMIN)) "ADMIN" else if (editProfile.roles.contains(Role.SELLER)) "SELLER" else "USER",
+                profileResponse.isVerified,
+                profileResponse.vkId
         ))
 
         val newSeller = registeredUser?.let {
@@ -628,22 +631,38 @@ class AdvertisementController {
 
     //@PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("seller/")
-    fun postCategoryRequest(@RequestBody sellerRequest: SellerRequest): ResponseEntity<*> {
-        val registeredUser: User = authService.signup(RegisterUserDto(
+    fun postCategoryRequest(): ResponseEntity<*> {
+        val profile = authService.getUserRecord()
+        val registeredUser = authService.updateUser(
+                profile.id,
+                RegisterUserDto(
+                        profile.login,
+                        profile.password,
+                        profile.firstName,
+                        profile.lastName,
+                        profile.photo,
+                        "SELLER",
+                        profile.isVerified,
+                        profile.vkId
+                )
+        )
+        /*val registeredUser: User = authService.signup(RegisterUserDto(
                 sellerRequest.login,
                 sellerRequest.password,
                 sellerRequest.firstName,
                 sellerRequest.lastName,
                 sellerRequest.photo,
                 "SELLER"
-        ))
-
-        val newSeller = advertisementService.saveSeller(Seller(registeredUser.id,
-                user = registeredUser,
-                about = sellerRequest.about
-        ))
-        return ResponseEntity.ok(newSeller)
-
+        ))*/
+        return if(registeredUser!=null){
+            val newSeller = advertisementService.saveSeller(Seller(registeredUser.id,
+                    user = registeredUser,
+                    about = ""
+            ))
+            ResponseEntity.ok(newSeller)
+        }else {
+            ResponseEntity(ResponseMessage("user is not exist"), HttpStatus.BAD_REQUEST)
+        }
     }
 
 
@@ -774,7 +793,7 @@ class AdvertisementController {
         }
 
         return if (true) {
-            ResponseEntity.ok(ResponsePoster(fileUUID))
+            ResponseEntity.ok(ResponsePoster("http://10.0.2.2:8080/api/auth/photo/$fileUUID"))
         } else {
             ResponseEntity(ResponseMessage("File is not uploaded"), HttpStatus.BAD_REQUEST)
         }

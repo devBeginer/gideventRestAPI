@@ -409,7 +409,8 @@ class AdvertisementService {
                             it.seller.user.firstName,
                             it.seller.user.lastName,
                             it.seller.user.photo,
-                            it.seller.about
+                            it.seller.about,
+                            it.seller.user.isVerified
                     ),
                     ticketPrice?.map { ticketPriceDto ->
                         TicketPriceResponse(
@@ -467,7 +468,8 @@ class AdvertisementService {
                         it.seller.user.firstName,
                         it.seller.user.lastName,
                         it.seller.user.photo,
-                        it.seller.about
+                        it.seller.about,
+                        it.seller.user.isVerified
                 ),
                 ticketPrice?.map { ticketPriceDto ->
                     TicketPriceResponse(
