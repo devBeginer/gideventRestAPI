@@ -11,6 +11,7 @@ data class Advertisement(
         val id: Long=0,
         val name: String,
         val duration: Int,
+        @Column(columnDefinition="TEXT")
         val description: String,
         @ManyToOne(targetEntity = TransportationVariant::class, fetch= FetchType.LAZY/*EAGER*/)
         @JoinColumn(referencedColumnName = "transportation_id",/*name = "transportation_id", insertable = false, updatable = false*/)
