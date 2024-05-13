@@ -245,6 +245,7 @@ class AdvertisementController {
                             advertisementRequest.ageRestrictions,
                             advertisementRequest.visitorsCount,
                             advertisementRequest.isIndividual,
+                            advertisementRequest.place,
                             advertisementRequest.photos,
                             advertisementRequest.rating,
                             category,
@@ -280,6 +281,7 @@ class AdvertisementController {
                     advertisementRequest.ageRestrictions,
                     advertisementRequest.visitorsCount,
                     advertisementRequest.isIndividual,
+                    advertisementRequest.place,
                     advertisementRequest.photos,
                     advertisementRequest.rating,
                     category,
@@ -906,6 +908,17 @@ class AdvertisementController {
         }
     }
 
+    @DeleteMapping("booking/")
+    fun delBookingRequest(@RequestParam("bookingId") bookingId: Long): ResponseEntity<*> {
+        val profile = authService.getUserRecord()
+        val booking = advertisementService.getBookingById(bookingId)
+        return if (booking != null && profile.id==booking.user.id) {
+            ResponseEntity.ok(advertisementService.deleteBooking(bookingId))
+        } else {
+            ResponseEntity(ResponseMessage("booking or profile is not exist"), HttpStatus.BAD_REQUEST)
+        }
+    }
+
     @PostMapping("confirmBooking/")
     fun postConfirmBookingRequest(@RequestParam("bookingId") bookingId: Long): ResponseEntity<*> {
         val profile = authService.getUserRecord()
@@ -1030,6 +1043,7 @@ class AdvertisementController {
                     booking.isApproved,
                     booking.user.id,
                     booking.user.lastName+" "+booking.user.firstName,
+                    booking.advertisement.place,
                     booking.totalPrice,
                     visitorsGroup?.map {
                         VisitorsGroupResponse(
@@ -1080,20 +1094,21 @@ class AdvertisementController {
         val advertisement =  advertisementService.getAdvertisementByStatus("MODERATION")
 
         return if (advertisement != null) {
-            val sellerAdvertResponse = advertisement.map {
+            val adminAdvertResponse = advertisement.map {
 
                 val ticketPrice =  advertisementService.getTicketPriceByAdvert(it.id).toList().sortedBy { ticketPrice -> ticketPrice.price }
 
-                SellerAdvertResponse(
+                AdminAdvertResponse(
                         it.id,
                         it.name,
                         ticketPrice.firstOrNull()?.price?:0,
                         it.visitorsCount,
+                        it.place,
                         it.status
                 )
             }
             ResponseEntity.ok(
-                    sellerAdvertResponse
+                    adminAdvertResponse
             )
         } else {
             ResponseEntity(ResponseMessage("booking or seller is not exist"), HttpStatus.BAD_REQUEST)
@@ -1116,6 +1131,7 @@ class AdvertisementController {
                             advertisement.ageRestrictions,
                             advertisement.visitorsCount,
                             advertisement.isIndividual,
+                            advertisement.place,
                             advertisement.photos,
                             advertisement.rating,
                             advertisement.category,
@@ -1146,6 +1162,7 @@ class AdvertisementController {
                             advertisement.ageRestrictions,
                             advertisement.visitorsCount,
                             advertisement.isIndividual,
+                            advertisement.place,
                             advertisement.photos,
                             advertisement.rating,
                             advertisement.category,
@@ -1209,6 +1226,7 @@ class AdvertisementController {
                             advertisement.ageRestrictions,
                             advertisement.visitorsCount,
                             advertisement.isIndividual,
+                            advertisement.place,
                             advertisement.photos,
                             newRating,
                             advertisement.category,

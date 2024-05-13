@@ -19,6 +19,7 @@ data class Advertisement(
         val ageRestrictions: Int,
         val visitorsCount: Int,
         val isIndividual: Boolean,
+        val place: String,
         val photos: String,
         val rating: Int,
         @ManyToOne(targetEntity = Category::class, fetch= FetchType.LAZY/*EAGER*/)

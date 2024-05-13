@@ -11,6 +11,7 @@ data class AdvertisementRequest(
         val ageRestrictions: Int,
         val visitorsCount: Int,
         val isIndividual: Boolean,
+        val place: String,
         val photos: String,
         val rating: Int,
         val category: Long,

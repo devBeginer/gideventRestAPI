@@ -747,6 +747,20 @@ class AdvertisementService {
         }
     }
 
+    fun deleteBooking(bookingId: Long): Boolean {
+        return if(bookingRepository.existsById(bookingId)){
+            val booking = bookingRepository.findById(bookingId)
+            val group = groupRepository.findByBooking(booking.get())
+            group.forEach {
+                groupRepository.deleteById(it.id)
+            }
+            bookingRepository.deleteById(bookingId)
+            true
+        }else{
+            false
+        }
+    }
+
     fun deleteEventTime(eventTimeId: Long): Boolean {
         return if(eventTimeRepository.existsById(eventTimeId)){
             eventTimeRepository.deleteById(eventTimeId)
